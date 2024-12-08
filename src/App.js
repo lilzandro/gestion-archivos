@@ -1,25 +1,51 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from 'react-router-dom'
+import Dashboard from './components/Dashboard'
+import Upload from './components/Upload'
+import Login from './components/Login'
+import { UserProvider } from './components/UserContext' // Importar UserProvider
 
-function App() {
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false) // Simulación de sesión
+
+  const handleLogin = () => {
+    setIsLoggedIn(true)
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path='/login' element={<Login onLogin={handleLogin} />} />
+          <Route path='/register' element={<Login onLogin={handleLogin} />} />
+          <Route
+            path='/dashboard'
+            element={
+              isLoggedIn ? (
+                <Dashboard onLogout={handleLogout} />
+              ) : (
+                <Navigate to='/login' />
+              )
+            }
+          />
+          <Route
+            path='/upload'
+            element={isLoggedIn ? <Upload /> : <Navigate to='/login' />}
+          />
+          <Route path='/' element={<Navigate to='/login' />} />
+        </Routes>
+      </Router>
+    </UserProvider>
+  )
 }
 
-export default App;
+export default App

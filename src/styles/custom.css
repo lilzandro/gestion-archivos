@@ -1,0 +1,66 @@
+/* Ajusta el diseño del Navbar */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.navbar {
+  background-color: #00f2fe;
+}
+
+/* Configura el body para que el contenido no se centre verticalmente */
+body {
+  background: linear-gradient(to right, #4facfe, #00f2fe);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column; /* Apilar contenido verticalmente */
+}
+
+/* Ajustar el margen superior del contenido principal */
+.dashboard-content {
+  margin-top: 80px; /* Ajuste para evitar que el contenido quede tapado por el Navbar */
+  padding-left: 250px; /* Espacio para el panel lateral en pantallas grandes */
+  padding-right: 0; /* Sin padding a la derecha en pantallas grandes */
+}
+
+.dashboard-content.collapsed {
+  padding-left: 0; /* Sin espacio cuando el panel lateral está oculto */
+}
+
+/* Estilo del panel lateral */
+.sidebar {
+  position: fixed;
+  top: 62px; /* Altura del Navbar */
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background-color: #ffffff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  z-index: 1030;
+  overflow-y: auto;
+}
+
+.sidebar nav {
+  padding: 1rem;
+}
+
+.sidebar nav .nav-link {
+  color: #000000;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* Ocultar panel lateral en pantallas pequeñas */
+@media (max-width: 991.98px) {
+  .dashboard-content {
+    padding-left: 0; 
+    padding-left: 15px; 
+    padding-right: 15px; 
+  }
+
+  .sidebar {
+    display: none; /* Escondemos el panel lateral */
+  }
+}
