@@ -63,6 +63,10 @@ const AuthForm = ({ onLogin }) => {
           password
         })
         setUser(response.data.user) // Guardar datos del usuario en el contexto
+        const { token, user } = response.data
+        localStorage.setItem('token', token)
+        localStorage.setItem('userId', response.data.user.id)
+        localStorage.setItem('user', JSON.stringify(user)) // Guardar el token en localStorage
         setSuccess(response.data.message)
         onLogin(response.data.user) // Actualizar estado en el componente padre
         navigate('/dashboard') // Redirigir al dashboard
