@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,44 +6,66 @@ import {
   Navigate
 } from 'react-router-dom'
 import Dashboard from './components/Dashboard'
-import Upload from './components/Upload'
 import Login from './components/Login'
-import { UserProvider } from './components/UserContext' // Importar UserProvider
+import { UserProvider, useUser } from './components/UserContext' // Importar UserProvider y hook de contexto
+import axios from 'axios'
 
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // Simulación de sesión
+const AppContent = () => {
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const { user, setUser } = useUser() // Usar el contexto para manejar el estado de usuario
 
-  const handleLogin = () => {
-    setIsLoggedIn(true)
-  }
+  useEffect(() => {
+    // Verificar si hay un token válido al cargar la app
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          const response = await axios.get(
+            'http://localhost:5000/validate-token',
+            {
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          )
+          setUser(response.data.user) // Establecer el usuario en el contexto
+        } catch (error) {
+          console.error('Token inválido o expirado:', error)
+          localStorage.removeItem('token') // Eliminar token inválido
+        }
+      }
+      setIsCheckingAuth(false) // Finalizar la verificación
+    }
+    checkAuth()
+  }, [setUser])
 
-  const handleLogout = () => {
-    setIsLoggedIn(false)
+  if (isCheckingAuth) {
+    return <div>Cargando...</div> // Mostrar un indicador mientras se verifica el estado de autenticación
   }
 
   return (
+    <Router>
+      <Routes>
+        <Route
+          path='/login'
+          element={user ? <Navigate to='/dashboard' /> : <Login />}
+        />
+        <Route
+          path='/register'
+          element={user ? <Navigate to='/dashboard' /> : <Login />}
+        />
+        <Route
+          path='/dashboard'
+          element={user ? <Dashboard /> : <Navigate to='/login' />}
+        />
+        <Route path='/' element={<Navigate to='/login' />} />
+      </Routes>
+    </Router>
+  )
+}
+
+const App = () => {
+  return (
     <UserProvider>
-      <Router>
-        <Routes>
-          <Route path='/login' element={<Login onLogin={handleLogin} />} />
-          <Route path='/register' element={<Login onLogin={handleLogin} />} />
-          <Route
-            path='/dashboard'
-            element={
-              isLoggedIn ? (
-                <Dashboard onLogout={handleLogout} />
-              ) : (
-                <Navigate to='/login' />
-              )
-            }
-          />
-          <Route
-            path='/upload'
-            element={isLoggedIn ? <Upload /> : <Navigate to='/login' />}
-          />
-          <Route path='/' element={<Navigate to='/login' />} />
-        </Routes>
-      </Router>
+      <AppContent />
     </UserProvider>
   )
 }

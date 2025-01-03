@@ -21,7 +21,7 @@ const DocumentsContent = ({ uploadedFiles }) => {
         <Col md={8}>
           <Form.Control
             type='text'
-            placeholder='Buscar archivo...'
+            placeholder='Buscar archivo.......dd'
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
