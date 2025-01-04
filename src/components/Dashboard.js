@@ -17,6 +17,7 @@ import BarraLateral from './BarraLateral/BarraLateral'
 import ContenidoArchivo from './BarraLateral/ContenidoArchivo/ContenidoDelArchivo'
 import ModalCargaArchivos from './ModalArchivo/ModalCargaArchivo'
 import PDFViewer from './PDFViewer'
+import { AiFillFilePdf, AiFillPicture } from 'react-icons/ai'
 
 const Dashboard = () => {
   const { setUser } = useUser()
@@ -31,6 +32,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [showPDFViewer, setShowPDFViewer] = useState(false)
   const [selectedFileUrl, setSelectedFileUrl] = useState(null)
+  const [selectedFileName, setSelectedFileName] = useState(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -84,8 +86,9 @@ const Dashboard = () => {
     return <div>Cargando...</div> // Puedes mostrar un spinner o mensaje mientras se valida el token
   }
 
-  const handleViewFile = fileUrl => {
+  const handleViewFile = (fileUrl, fileName) => {
     setSelectedFileUrl(fileUrl)
+    setSelectedFileName(fileName) // Guarda el nombre del archivo
     setShowPDFViewer(true)
   }
 
@@ -139,24 +142,27 @@ const Dashboard = () => {
                 <h4>Archivos Subidos Recientemente</h4>
                 <div className='uploaded-files p-3 border rounded bg-light'>
                   {uploadedFiles.length > 0 ? (
-                    <Row className='gy-4 gx-4'>
+                    <Row className='gy-4 gx-4 '>
                       {uploadedFiles.slice(0, 9).map(file =>
                         file && file.file_name ? (
                           <Col xs={12} md={4} key={file.id}>
                             <Card
-                              className='shadow-sm h-100'
+                              className='shadow-sm h-100 w-100'
                               style={{
                                 maxWidth: '300px',
                                 minHeight: '200px',
-                                maxHeight: '250px'
+                                maxHeight: '250px',
+                                margin: '0 auto'
                               }}
                             >
                               <Card.Body className='d-flex align-items-center'>
                                 {/* Ícono del archivo */}
-                                <span className='fs-1 me-3'>
-                                  {file.file_name.endsWith('.pdf')
-                                    ? '📄'
-                                    : '🖼️'}
+                                <span className='fs-1 me-4 m-1'>
+                                  {file.file_name.endsWith('.pdf') ? (
+                                    <AiFillFilePdf color='#FF0000' size={60} />
+                                  ) : (
+                                    <AiFillPicture color='#00A1FF' size={60} />
+                                  )}
                                 </span>
                                 {/* Información del archivo */}
                                 <div
@@ -273,6 +279,7 @@ const Dashboard = () => {
         show={showPDFViewer}
         onHide={() => setShowPDFViewer(false)}
         fileUrl={selectedFileUrl}
+        fileName={selectedFileName} // Pasamos el nombre del archivo
       />
     </>
   )

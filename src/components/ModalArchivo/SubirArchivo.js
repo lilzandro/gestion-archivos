@@ -23,6 +23,16 @@ const SubirArchivo = ({ setUploadedFiles }) => {
     }
   }, [])
 
+  useEffect(() => {
+    if (message || error) {
+      const timer = setTimeout(() => {
+        setMessage('')
+        setError('')
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [message, error])
+
   // Obtener las categorías desde el backend
   const fetchCategories = async () => {
     try {
@@ -103,7 +113,58 @@ const SubirArchivo = ({ setUploadedFiles }) => {
       fetchCategories()
     } catch (error) {
       console.error(error)
-      setMessage('Hubo un error al subir el archivo.')
+      setError('Hubo un error al subir el archivo.')
+    }
+  }
+
+  const handleCreateCategory = async () => {
+    const token = localStorage.getItem('token')
+    if (!newCategory) {
+      setMessage('Por favor, ingresa un nombre para la nueva categoría.')
+      return
+    }
+
+    try {
+      const response = await axios.post(
+        'http://localhost:5000/categories',
+        { name: newCategory },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      setMessage(response.data.message)
+      setNewCategory('')
+      fetchCategories()
+    } catch (error) {
+      console.error('Error al crear la categoría:', error)
+      setError('Hubo un error al crear la categoría.')
+    }
+  }
+
+  const handleDeleteCategory = async categoryId => {
+    const token = localStorage.getItem('token')
+    try {
+      const response = await axios.delete(
+        `http://localhost:5000/categories/${categoryId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      setMessage(response.data.message)
+      fetchCategories()
+    } catch (error) {
+      console.error('Error al eliminar la categoría:', error)
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        setError(`${error.response.data.message}.`)
+      }
     }
   }
 
@@ -133,26 +194,43 @@ const SubirArchivo = ({ setUploadedFiles }) => {
             </p>
           )}
         </div>
-        {error && <div className='alert alert-danger mt-3'>{error}</div>}
+        {error && (
+          <div className='alert alert-danger mt-3'>
+            {error}
+            <div style={{ fontSize: 'small' }}>
+              Para eliminar una categoría con archivos, primero elimina los
+              archivos.
+            </div>
+          </div>
+        )}
         <div className='mb-3 mt-3'>
           {!newCategory && (
             <>
               <label htmlFor='category' className='form-label'>
                 Seleccionar Categoría
               </label>
-              <select
-                className='form-control'
-                id='category'
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-              >
-                <option value=''>Seleccionar categoría existente</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+              <div className='input-group'>
+                <select
+                  className='form-control'
+                  id='category'
+                  value={category}
+                  onChange={e => setCategory(e.target.value)}
+                >
+                  <option value=''>Seleccionar categoría existente</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type='button'
+                  className='btn btn-danger'
+                  onClick={() => handleDeleteCategory(category)}
+                >
+                  Eliminar
+                </button>
+              </div>
             </>
           )}
           {!category && (
@@ -160,14 +238,23 @@ const SubirArchivo = ({ setUploadedFiles }) => {
               <label htmlFor='newCategory' className='form-label'>
                 O agregar nueva categoría
               </label>
-              <input
-                type='text'
-                className='form-control'
-                id='newCategory'
-                value={newCategory}
-                onChange={e => setNewCategory(e.target.value)}
-                placeholder='Escribe nueva categoría'
-              />
+              <div className='input-group'>
+                <input
+                  type='text'
+                  className='form-control'
+                  id='newCategory'
+                  value={newCategory}
+                  onChange={e => setNewCategory(e.target.value)}
+                  placeholder='Escribe nueva categoría'
+                />
+                <button
+                  type='button'
+                  className='btn btn-secondary'
+                  onClick={handleCreateCategory}
+                >
+                  Crear
+                </button>
+              </div>
             </div>
           )}
         </div>

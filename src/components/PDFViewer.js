@@ -4,7 +4,7 @@ import { Worker, Viewer } from '@react-pdf-viewer/core'
 import '@react-pdf-viewer/core/lib/styles/index.css'
 import '@react-pdf-viewer/default-layout/lib/styles/index.css'
 
-const PDFViewer = ({ show, onHide, fileUrl }) => {
+const PDFViewer = ({ show, onHide, fileUrl, fileName }) => {
   const isPDF = fileUrl && fileUrl.endsWith('.pdf')
 
   return (
@@ -13,6 +13,9 @@ const PDFViewer = ({ show, onHide, fileUrl }) => {
         <Modal.Title>Visor de Archivo</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {fileName && (
+          <h5 className='text-center mb-4'>{fileName}</h5> // Nombre del archivo centrado
+        )}
         {fileUrl ? (
           isPDF ? (
             <Worker
