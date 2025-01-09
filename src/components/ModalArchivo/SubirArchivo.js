@@ -125,8 +125,15 @@ const SubirArchivo = ({ setUploadedFiles }) => {
 
   const handleCreateCategory = async () => {
     const token = localStorage.getItem('token')
+    const lettersOnly = /^[A-Za-z]+$/
+
     if (!newCategory) {
       toast.error('Por favor, ingresa un nombre para la nueva categoría.')
+      return
+    }
+
+    if (!lettersOnly.test(newCategory)) {
+      toast.error('La categoría solo puede contener letras.')
       return
     }
 
