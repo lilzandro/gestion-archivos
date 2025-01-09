@@ -27,37 +27,11 @@ router.post(
   isAdmin,
   upload.single('file'),
   (req, res) => {
-    const { userId, category, description } = req.body
+    const { userId, category, description, newCategory } = req.body
     const fileName = req.file.originalname
     const filePath = path.join('uploads', req.file.filename)
 
-    const categoryQuery = 'SELECT id FROM categories WHERE name = ?'
-    db.query(categoryQuery, [category], (err, categoryResult) => {
-      if (err)
-        return res
-          .status(500)
-          .json({ message: 'Error al verificar la categoría', error: err })
-
-      let categoryId
-
-      if (categoryResult.length > 0) {
-        categoryId = categoryResult[0].id
-        saveFile(categoryId)
-      } else {
-        const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
-        db.query(insertCategoryQuery, [category], (err, insertResult) => {
-          if (err)
-            return res
-              .status(500)
-              .json({ message: 'Error al crear la categoría', error: err })
-
-          categoryId = insertResult.insertId
-          saveFile(categoryId)
-        })
-      }
-    })
-
-    const saveFile = categoryId => {
+    const saveFile = (categoryId, categoryName) => {
       const insertFileQuery =
         'INSERT INTO files (user_id, file_name, file_path, category_id, description) VALUES (?, ?, ?, ?, ?)'
       db.query(
@@ -75,12 +49,46 @@ router.post(
               id: fileResult.insertId,
               file_name: fileName,
               file_path: filePath,
-              category,
+              category: categoryName,
               description
             }
           })
         }
       )
+    }
+
+    if (newCategory) {
+      // Crear la categoría si no existe
+      const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
+      db.query(insertCategoryQuery, [newCategory], (err, insertResult) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ message: 'Error al crear la categoría', error: err })
+        }
+
+        const categoryId = insertResult.insertId
+        saveFile(categoryId, newCategory)
+      })
+    } else {
+      const checkCategoryQuery = 'SELECT id, name FROM categories WHERE id = ?'
+      db.query(checkCategoryQuery, [category], (err, categoryResult) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ message: 'Error al verificar la categoría', error: err })
+        }
+
+        if (categoryResult.length === 0) {
+          return res
+            .status(400)
+            .json({ message: 'La categoría seleccionada no existe' })
+        }
+
+        const categoryId = categoryResult[0].id
+        const categoryName = categoryResult[0].name
+        saveFile(categoryId, categoryName)
+      })
     }
   }
 )
@@ -88,13 +96,30 @@ router.post(
 // Crear nueva categoría (solo administrador)
 router.post('/categories', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.body
-  const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
-  db.query(insertCategoryQuery, [name], (err, result) => {
-    if (err)
+
+  // Verificar si la categoría ya existe
+  const checkCategoryQuery = 'SELECT id FROM categories WHERE name = ?'
+  db.query(checkCategoryQuery, [name], (err, results) => {
+    if (err) {
       return res
         .status(500)
-        .json({ message: 'Error al crear la categoría', error: err })
-    res.status(200).json({ message: 'Categoría creada exitosamente' })
+        .json({ message: 'Error al verificar la categoría', error: err })
+    }
+
+    if (results.length > 0) {
+      return res.status(400).json({ message: 'La categoría ya existe' })
+    }
+
+    // Crear la categoría si no existe
+    const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
+    db.query(insertCategoryQuery, [name], (err, result) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: 'Error al crear la categoría', error: err })
+      }
+      res.status(200).json({ message: 'Categoría creada exitosamente' })
+    })
   })
 })
 

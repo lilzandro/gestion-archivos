@@ -175,7 +175,7 @@ const AuthForm = ({ onLogin }) => {
         style={{
           width: '100%',
           minWidth: showSecurityQuestions ? '300px' : '300px',
-          maxWidth: showSecurityQuestions ? '800px' : '350px',
+          maxWidth: showSecurityQuestions ? '800px' : '400px',
           padding: '20px'
         }}
       >

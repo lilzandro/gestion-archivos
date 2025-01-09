@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useDropzone } from 'react-dropzone'
 import { FaFile } from 'react-icons/fa'
+import { Toaster, toast } from 'react-hot-toast'
 
 const SubirArchivo = ({ setUploadedFiles }) => {
   const [file, setFile] = useState(null)
@@ -24,12 +25,13 @@ const SubirArchivo = ({ setUploadedFiles }) => {
   }, [])
 
   useEffect(() => {
-    if (message || error) {
-      const timer = setTimeout(() => {
-        setMessage('')
-        setError('')
-      }, 4000)
-      return () => clearTimeout(timer)
+    if (message) {
+      toast.success(message)
+      setMessage('')
+    }
+    if (error) {
+      toast.error(error)
+      setError('')
     }
   }, [message, error])
 
@@ -69,19 +71,22 @@ const SubirArchivo = ({ setUploadedFiles }) => {
     accept: 'image/jpeg, image/png, application/pdf'
   })
 
+  // ...existing code...
+
   const handleSubmit = async e => {
     e.preventDefault()
     const token = localStorage.getItem('token')
 
     if (!file || (!category && !newCategory) || !description || !userId) {
-      setMessage('Por favor, completa todos los campos.')
+      toast.error('Por favor, completa todos los campos.')
       return
     }
 
     const formData = new FormData()
     formData.append('file', file)
     formData.append('userId', userId)
-    formData.append('category', newCategory || category) // Priorizar nueva categoría
+    formData.append('category', category) // Enviar categoría existente como ID
+    formData.append('newCategory', newCategory) // Enviar nueva categoría si existe
     formData.append('description', description)
 
     try {
@@ -96,7 +101,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
         }
       )
 
-      setMessage(response.data.message)
+      toast.success(response.data.message)
       setFile(null)
       setCategory('')
       setNewCategory('')
@@ -112,14 +117,16 @@ const SubirArchivo = ({ setUploadedFiles }) => {
       fetchCategories()
     } catch (error) {
       console.error(error)
-      setError('Hubo un error al subir el archivo.')
+      toast.error('Hubo un error al subir el archivo.')
     }
   }
+
+  // ...existing code...
 
   const handleCreateCategory = async () => {
     const token = localStorage.getItem('token')
     if (!newCategory) {
-      setMessage('Por favor, ingresa un nombre para la nueva categoría.')
+      toast.error('Por favor, ingresa un nombre para la nueva categoría.')
       return
     }
 
@@ -133,12 +140,14 @@ const SubirArchivo = ({ setUploadedFiles }) => {
           }
         }
       )
-      setMessage(response.data.message)
+      toast.success(response.data.message)
       setNewCategory('')
-      fetchCategories()
+      fetchCategories() // Refrescar categorías después de crear una nueva
     } catch (error) {
       console.error('Error al crear la categoría:', error)
-      setError('Error. La categoria ya existe.')
+      const errorMessage =
+        error.response?.data?.message || 'Error al crear la categoría.'
+      toast.error(errorMessage)
     }
   }
 
@@ -153,13 +162,13 @@ const SubirArchivo = ({ setUploadedFiles }) => {
           }
         }
       )
-      setMessage(response.data.message)
+      toast.success(response.data.message)
       setCategory('') // Restablecer la selección de categoría
       setNewCategory('') // Restablecer la nueva categoría
       fetchCategories()
     } catch (error) {
       console.error('Error al eliminar la categoría:', error)
-      setError(
+      toast.error(
         error.response?.data?.message || 'Error al eliminar la categoría.'
       )
     }
@@ -167,6 +176,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
 
   return (
     <div className='container mt-4'>
+      <Toaster />
       <form onSubmit={handleSubmit} className='p-4 rounded'>
         <div
           {...getRootProps()}
@@ -207,7 +217,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
                 >
                   <option value=''>Seleccionar categoría existente</option>
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.name}>
+                    <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}

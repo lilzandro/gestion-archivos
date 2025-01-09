@@ -10,6 +10,7 @@ import ContenidoArchivo from './BarraLateral/BuscarArchivo/BuscarArchivo'
 import ModalCargaArchivos from './ModalArchivo/ModalCargaArchivo'
 import PDFViewer from './PDFViewer'
 import ArchivoCard from './ArchivoCard'
+import { Toaster, toast } from 'react-hot-toast'
 
 const Dashboard = () => {
   const { user, setUser } = useUser()
@@ -18,6 +19,8 @@ const Dashboard = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([])
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [fileToDelete, setFileToDelete] = useState(null)
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
   const userId = token ? JSON.parse(atob(token.split('.')[1])).id : null // Extrae el ID del token
@@ -83,6 +86,24 @@ const Dashboard = () => {
     setShowPDFViewer(true)
   }
 
+  const handleDeleteFile = async () => {
+    try {
+      await axios.delete(`http://localhost:5000/files/${fileToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setUploadedFiles(uploadedFiles.filter(file => file.id !== fileToDelete))
+      setShowDeleteModal(false)
+
+      // Mostrar notificación de éxito
+      toast.success('Archivo eliminado con éxito!')
+    } catch (error) {
+      console.error('Error al eliminar archivo:', error)
+
+      // Mostrar notificación de error
+      toast.error('Hubo un problema al eliminar el archivo.')
+    }
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
@@ -104,6 +125,7 @@ const Dashboard = () => {
 
   return (
     <>
+      <Toaster position='top-center' reverseOrder={false} />
       <NavbarComponent
         toggleSidebar={toggleSidebar}
         userProfile={userProfile}
@@ -137,17 +159,20 @@ const Dashboard = () => {
                 <div className='uploaded-files p-3 border rounded bg-light'>
                   {uploadedFiles.length > 0 ? (
                     <Row className='gy-4 gx-4 '>
-                      {uploadedFiles
-                        .slice(0, 9)
-                        .map(file =>
-                          file && file.file_name ? (
-                            <ArchivoCard
-                              key={file.id}
-                              file={file}
-                              handleViewFile={handleViewFile}
-                            />
-                          ) : null
-                        )}
+                      {uploadedFiles.slice(0, 9).map(file =>
+                        file && file.file_name ? (
+                          <ArchivoCard
+                            key={file.id}
+                            file={file}
+                            handleViewFile={handleViewFile}
+                            handleDeleteFile={() => {
+                              setFileToDelete(file.id)
+                              setShowDeleteModal(true)
+                            }}
+                            isAdmin={user && user.role === 'admin'}
+                          />
+                        ) : null
+                      )}
                     </Row>
                   ) : (
                     <div className='text-center'>
@@ -168,6 +193,11 @@ const Dashboard = () => {
           <ContenidoArchivo
             files={uploadedFiles}
             handleViewFile={handleViewFile}
+            handleDeleteFile={file => {
+              setFileToDelete(file.id)
+              setShowDeleteModal(true)
+            }}
+            isAdmin={user && user.role === 'admin'}
           />
         )}
         {activeSection === 'profile' && (
@@ -208,6 +238,25 @@ const Dashboard = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Modal de Confirmación para Eliminar Archivo */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Eliminación de Archivo</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          ¿Estás seguro de que deseas eliminar este archivo?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant='secondary' onClick={() => setShowDeleteModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant='danger' onClick={handleDeleteFile}>
+            Eliminar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <PDFViewer
         show={showPDFViewer}
         onHide={() => setShowPDFViewer(false)}

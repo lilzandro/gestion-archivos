@@ -1,8 +1,9 @@
 import React from 'react'
 import { Card, Button, Col } from 'react-bootstrap'
 import { AiFillFilePdf, AiFillPicture } from 'react-icons/ai'
+import { FaTrashAlt } from 'react-icons/fa'
 
-const ArchivoCard = ({ file, handleViewFile }) => {
+const ArchivoCard = ({ file, handleViewFile, handleDeleteFile, isAdmin }) => {
   return (
     <Col xs={12} md={4} key={file.id}>
       <Card
@@ -58,6 +59,16 @@ const ArchivoCard = ({ file, handleViewFile }) => {
             >
               Ver Archivo
             </Button>
+            {isAdmin && (
+              <Button
+                variant='outline-danger'
+                size='sm'
+                className='ms-2'
+                onClick={() => handleDeleteFile(file.id)}
+              >
+                <FaTrashAlt />
+              </Button>
+            )}
           </div>
         </Card.Body>
       </Card>
