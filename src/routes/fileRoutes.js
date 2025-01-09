@@ -165,8 +165,8 @@ router.get('/categories', authenticateToken, (req, res) => {
 
 // Buscar archivos por nombre o categoría
 router.get('/search', authenticateToken, (req, res) => {
-  const { term } = req.query
-  const query = `
+  const { term, category } = req.query
+  let query = `
     SELECT 
       f.id, 
       f.file_name, 
@@ -181,12 +181,24 @@ router.get('/search', authenticateToken, (req, res) => {
     ON 
       f.category_id = c.id
     WHERE 
-      f.file_name LIKE ? OR c.name LIKE ?
-    ORDER BY 
-      f.id DESC
+      1=1
   `
-  const searchTerm = `%${term}%`
-  db.query(query, [searchTerm, searchTerm], (err, results) => {
+  const queryParams = []
+
+  if (term) {
+    query += ' AND (f.file_name LIKE ? OR c.name LIKE ?)'
+    const searchTerm = `${term}%`
+    queryParams.push(searchTerm, searchTerm)
+  }
+
+  if (category) {
+    query += ' AND c.name = ?'
+    queryParams.push(category)
+  }
+
+  query += ' ORDER BY f.id DESC'
+
+  db.query(query, queryParams, (err, results) => {
     if (err) {
       return res
         .status(500)

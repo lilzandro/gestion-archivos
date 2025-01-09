@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, createContext } from 'react'
 import { Container, Row, Col, Button, Image, Modal } from 'react-bootstrap'
 import axios from 'axios'
 import { useUser } from './UserContext'
@@ -11,6 +11,8 @@ import ModalCargaArchivos from './ModalArchivo/ModalCargaArchivo'
 import PDFViewer from './PDFViewer'
 import ArchivoCard from './ArchivoCard'
 import { Toaster, toast } from 'react-hot-toast'
+
+const FileContext = createContext()
 
 const Dashboard = () => {
   const { user, setUser } = useUser()
@@ -124,7 +126,7 @@ const Dashboard = () => {
   }
 
   return (
-    <>
+    <FileContext.Provider value={{ uploadedFiles, setUploadedFiles }}>
       <Toaster position='top-center' reverseOrder={false} />
       <NavbarComponent
         toggleSidebar={toggleSidebar}
@@ -263,8 +265,9 @@ const Dashboard = () => {
         fileUrl={selectedFileUrl}
         fileName={selectedFileName} // Pasamos el nombre del archivo
       />
-    </>
+    </FileContext.Provider>
   )
 }
 
 export default Dashboard
+export { FileContext }
