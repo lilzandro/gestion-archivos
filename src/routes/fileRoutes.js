@@ -2,6 +2,7 @@ const express = require('express')
 const multer = require('multer')
 const db = require('../config/database')
 const authenticateToken = require('../middleware/jwt')
+const isAdmin = require('../Middleware/verificarAdmin')
 const path = require('path')
 
 const router = express.Router()
@@ -19,67 +20,73 @@ const fileFilter = (req, file, cb) => {
 }
 const upload = multer({ storage, fileFilter })
 
-// Subir archivo
-router.post('/upload', authenticateToken, upload.single('file'), (req, res) => {
-  const { userId, category, description } = req.body
-  const fileName = req.file.originalname
-  const filePath = path.join('uploads', req.file.filename)
+// Subir archivo (solo administrador)
+router.post(
+  '/upload',
+  authenticateToken,
+  isAdmin,
+  upload.single('file'),
+  (req, res) => {
+    const { userId, category, description } = req.body
+    const fileName = req.file.originalname
+    const filePath = path.join('uploads', req.file.filename)
 
-  const categoryQuery = 'SELECT id FROM categories WHERE name = ?'
-  db.query(categoryQuery, [category], (err, categoryResult) => {
-    if (err)
-      return res
-        .status(500)
-        .json({ message: 'Error al verificar la categoría', error: err })
+    const categoryQuery = 'SELECT id FROM categories WHERE name = ?'
+    db.query(categoryQuery, [category], (err, categoryResult) => {
+      if (err)
+        return res
+          .status(500)
+          .json({ message: 'Error al verificar la categoría', error: err })
 
-    let categoryId
+      let categoryId
 
-    if (categoryResult.length > 0) {
-      categoryId = categoryResult[0].id
-      saveFile(categoryId)
-    } else {
-      const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
-      db.query(insertCategoryQuery, [category], (err, insertResult) => {
-        if (err)
-          return res
-            .status(500)
-            .json({ message: 'Error al crear la categoría', error: err })
-
-        categoryId = insertResult.insertId
+      if (categoryResult.length > 0) {
+        categoryId = categoryResult[0].id
         saveFile(categoryId)
-      })
-    }
-  })
+      } else {
+        const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
+        db.query(insertCategoryQuery, [category], (err, insertResult) => {
+          if (err)
+            return res
+              .status(500)
+              .json({ message: 'Error al crear la categoría', error: err })
 
-  const saveFile = categoryId => {
-    const insertFileQuery =
-      'INSERT INTO files (user_id, file_name, file_path, category_id, description) VALUES (?, ?, ?, ?, ?)'
-    db.query(
-      insertFileQuery,
-      [userId, fileName, filePath, categoryId, description],
-      (err, fileResult) => {
-        if (err) {
-          return res
-            .status(500)
-            .json({ message: 'Error al guardar el archivo', error: err })
-        }
-        res.status(200).json({
-          message: 'Archivo subido exitosamente',
-          file: {
-            id: fileResult.insertId,
-            file_name: fileName,
-            file_path: filePath,
-            category,
-            description
-          }
+          categoryId = insertResult.insertId
+          saveFile(categoryId)
         })
       }
-    )
-  }
-})
+    })
 
-// Crear nueva categoría
-router.post('/categories', authenticateToken, (req, res) => {
+    const saveFile = categoryId => {
+      const insertFileQuery =
+        'INSERT INTO files (user_id, file_name, file_path, category_id, description) VALUES (?, ?, ?, ?, ?)'
+      db.query(
+        insertFileQuery,
+        [userId, fileName, filePath, categoryId, description],
+        (err, fileResult) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: 'Error al guardar el archivo', error: err })
+          }
+          res.status(200).json({
+            message: 'Archivo subido exitosamente',
+            file: {
+              id: fileResult.insertId,
+              file_name: fileName,
+              file_path: filePath,
+              category,
+              description
+            }
+          })
+        }
+      )
+    }
+  }
+)
+
+// Crear nueva categoría (solo administrador)
+router.post('/categories', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.body
   const insertCategoryQuery = 'INSERT INTO categories (name) VALUES (?)'
   db.query(insertCategoryQuery, [name], (err, result) => {
@@ -164,8 +171,23 @@ router.get('/search', authenticateToken, (req, res) => {
   })
 })
 
-// Eliminar categoría
-router.delete('/categories/:id', authenticateToken, (req, res) => {
+// Eliminar archivo (solo administrador)
+router.delete('/files/:id', authenticateToken, isAdmin, (req, res) => {
+  const { id } = req.params
+
+  const deleteFileQuery = 'DELETE FROM files WHERE id = ?'
+  db.query(deleteFileQuery, [id], (err, result) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: 'Error al eliminar el archivo', error: err })
+    }
+    res.status(200).json({ message: 'Archivo eliminado exitosamente' })
+  })
+})
+
+// Eliminar categoría (solo administrador)
+router.delete('/categories/:id', authenticateToken, isAdmin, (req, res) => {
   const { id } = req.params
 
   const checkFilesQuery =

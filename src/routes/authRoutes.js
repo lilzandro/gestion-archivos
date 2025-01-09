@@ -129,7 +129,8 @@ router.post('/login', (req, res) => {
           id: user.id,
           username: user.username,
           nombre: user.nombre,
-          apellido: user.apellido
+          apellido: user.apellido,
+          role: user.role // Asegúrate de incluir el rol del usuario en el token
         },
         JWT_SECRET,
         { expiresIn: '1h' }
@@ -142,7 +143,8 @@ router.post('/login', (req, res) => {
           id: user.id,
           nombre: user.nombre,
           apellido: user.apellido,
-          username: user.username
+          username: user.username,
+          role: user.role // Asegúrate de incluir el rol del usuario en la respuesta
         }
       })
     }
@@ -152,7 +154,7 @@ router.post('/login', (req, res) => {
 const isAdmin = (req, res, next) => {
   const userId = req.user.id
 
-  db.query('SELECT role FROM user WHERE id = ?', [userId], (err, results) => {
+  db.query('SELECT rol FROM user WHERE id = ?', [userId], (err, results) => {
     if (err || results.length === 0) {
       return res
         .status(500)

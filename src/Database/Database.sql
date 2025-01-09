@@ -39,3 +39,5 @@ ALTER TABLE user
 ADD COLUMN security_answer1 VARCHAR(255),
 ADD COLUMN security_answer2 VARCHAR(255),
 ADD COLUMN security_answer3 VARCHAR(255);
+ALTER TABLE user
+ADD COLUMN role ENUM('admin', 'user') DEFAULT 'user';

@@ -12,7 +12,7 @@ import PDFViewer from './PDFViewer'
 import ArchivoCard from './ArchivoCard'
 
 const Dashboard = () => {
-  const { setUser } = useUser()
+  const { user, setUser } = useUser()
   const [showSidebar, setShowSidebar] = useState(false)
   const [activeSection, setActiveSection] = useState('dashboard')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -120,13 +120,15 @@ const Dashboard = () => {
           <div>
             <Row className='mb-4'>
               <Col>
-                <Button
-                  variant='primary'
-                  className='w-100'
-                  onClick={() => setShowUploadModal(true)}
-                >
-                  Subir Archivo
-                </Button>
+                {user && user.role === 'admin' && (
+                  <Button
+                    variant='primary'
+                    className='w-100'
+                    onClick={() => setShowUploadModal(true)}
+                  >
+                    Subir Archivo
+                  </Button>
+                )}
               </Col>
             </Row>
             <Row className='gy-4'>
