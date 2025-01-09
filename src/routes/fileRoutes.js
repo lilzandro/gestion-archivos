@@ -91,39 +91,8 @@ router.post('/categories', authenticateToken, (req, res) => {
   })
 })
 
-// Eliminar categoría
-router.delete('/categories/:id', authenticateToken, (req, res) => {
-  const { id } = req.params
-
-  const checkFilesQuery =
-    'SELECT COUNT(*) AS fileCount FROM files WHERE category_id = ?'
-  db.query(checkFilesQuery, [id], (err, results) => {
-    if (err) {
-      return res.status(500).json({
-        message: 'Error al verificar archivos en la categoría',
-        error: err
-      })
-    }
-
-    if (results[0].fileCount > 0) {
-      return res.status(400)
-    }
-
-    const deleteCategoryQuery = 'DELETE FROM categories WHERE id = ?'
-    db.query(deleteCategoryQuery, [id], (err, result) => {
-      if (err) {
-        return res
-          .status(500)
-          .json({ message: 'Error al eliminar la categoría', error: err })
-      }
-      res.status(200).json({ message: 'Categoría eliminada exitosamente' })
-    })
-  })
-})
-
-// Obtener archivos con categorías
-router.get('/files/:userId', authenticateToken, (req, res) => {
-  const { userId } = req.params
+// Obtener todos los archivos con categorías
+router.get('/files', authenticateToken, (req, res) => {
   const query = `
     SELECT 
       f.id, 
@@ -138,12 +107,10 @@ router.get('/files/:userId', authenticateToken, (req, res) => {
       categories c 
     ON 
       f.category_id = c.id
-    WHERE 
-      f.user_id = ? 
     ORDER BY 
       f.id DESC
   `
-  db.query(query, [userId], (err, results) => {
+  db.query(query, (err, results) => {
     if (err) {
       return res
         .status(500)
@@ -161,6 +128,72 @@ router.get('/categories', authenticateToken, (req, res) => {
         .status(500)
         .json({ message: 'Error al obtener categorías', error: err })
     res.status(200).json(results)
+  })
+})
+
+// Buscar archivos por nombre o categoría
+router.get('/search', authenticateToken, (req, res) => {
+  const { term } = req.query
+  const query = `
+    SELECT 
+      f.id, 
+      f.file_name, 
+      f.file_path, 
+      f.description, 
+      f.created_at, 
+      c.name AS category 
+    FROM 
+      files f
+    LEFT JOIN 
+      categories c 
+    ON 
+      f.category_id = c.id
+    WHERE 
+      f.file_name LIKE ? OR c.name LIKE ?
+    ORDER BY 
+      f.id DESC
+  `
+  const searchTerm = `%${term}%`
+  db.query(query, [searchTerm, searchTerm], (err, results) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ message: 'Error al buscar archivos', error: err })
+    }
+    res.status(200).json(results)
+  })
+})
+
+// Eliminar categoría
+router.delete('/categories/:id', authenticateToken, (req, res) => {
+  const { id } = req.params
+
+  const checkFilesQuery =
+    'SELECT COUNT(*) AS fileCount FROM files WHERE category_id = ?'
+  db.query(checkFilesQuery, [id], (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        message: 'Error al verificar archivos en la categoría',
+        error: err
+      })
+    }
+
+    if (results[0].fileCount > 0) {
+      return res.status(400).json({
+        message:
+          'No se puede eliminar la categoría porque tiene archivos relacionados'
+      })
+    }
+
+    const deleteCategoryQuery = 'DELETE FROM categories WHERE id = ?'
+    db.query(deleteCategoryQuery, [id], (err, result) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: 'Error al eliminar la categoría', error: err })
+      }
+      res.status(200).json({ message: 'Categoría eliminada exitosamente' })
+    })
   })
 })
 

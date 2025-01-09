@@ -23,31 +23,78 @@ router.get('/validate-token', (req, res) => {
 
 // Ruta de registro
 router.post('/register', async (req, res) => {
-  const { nombre, apellido, cedula, email, password } = req.body
+  const {
+    nombre,
+    apellido,
+    cedula,
+    username,
+    password,
+    securityAnswer1,
+    securityAnswer2,
+    securityAnswer3
+  } = req.body
 
   db.query(
-    'SELECT * FROM user WHERE email = ?',
-    [email],
+    'SELECT * FROM user WHERE username = ?',
+    [username],
     async (err, results) => {
       if (err)
-        return res
-          .status(500)
-          .json({ message: 'Error al verificar el correo', error: err })
+        return res.status(500).json({
+          message: 'Error al verificar el nombre de usuario',
+          error: err
+        })
 
       if (results.length > 0)
-        return res.status(400).json({ message: 'El correo ya está registrado' })
+        return res
+          .status(400)
+          .json({ message: 'El nombre de usuario ya está registrado' })
 
       const hashedPassword = await bcrypt.hash(password, 10)
 
       db.query(
-        'INSERT INTO user (nombre, apellido, cedula, email, password) VALUES (?, ?, ?, ?, ?)',
-        [nombre, apellido, cedula, email, hashedPassword],
-        err => {
+        'INSERT INTO user (nombre, apellido, cedula, username, password, security_answer1, security_answer2, security_answer3) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          nombre,
+          apellido,
+          cedula,
+          username,
+          hashedPassword,
+          securityAnswer1,
+          securityAnswer2,
+          securityAnswer3
+        ],
+        (err, results) => {
           if (err)
             return res
               .status(500)
               .json({ message: 'Error al registrar el usuario', error: err })
-          res.status(201).json({ message: 'Usuario registrado exitosamente' })
+
+          // Obtener el ID del nuevo usuario
+          const newUserId = results.insertId
+
+          // Crear token JWT
+          const token = jwt.sign(
+            {
+              id: newUserId,
+              username,
+              nombre,
+              apellido
+            },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+          )
+
+          // Responder con el usuario y el token
+          res.status(201).json({
+            message: 'Usuario registrado exitosamente',
+            user: {
+              id: newUserId,
+              nombre,
+              apellido,
+              username
+            },
+            token
+          })
         }
       )
     }
@@ -56,16 +103,17 @@ router.post('/register', async (req, res) => {
 
 // Ruta de login
 router.post('/login', (req, res) => {
-  const { email, password } = req.body
+  const { username, password } = req.body
 
   db.query(
-    'SELECT * FROM user WHERE email = ?',
-    [email],
+    'SELECT * FROM user WHERE username = ?',
+    [username],
     async (err, results) => {
       if (err)
-        return res
-          .status(500)
-          .json({ message: 'Error al verificar el correo', error: err })
+        return res.status(500).json({
+          message: 'Error al verificar el nombre de usuario',
+          error: err
+        })
 
       if (results.length === 0)
         return res.status(400).json({ message: 'El usuario no existe' })
@@ -79,7 +127,7 @@ router.post('/login', (req, res) => {
       const token = jwt.sign(
         {
           id: user.id,
-          email: user.email,
+          username: user.username,
           nombre: user.nombre,
           apellido: user.apellido
         },
@@ -94,11 +142,31 @@ router.post('/login', (req, res) => {
           id: user.id,
           nombre: user.nombre,
           apellido: user.apellido,
-          email: user.email
+          username: user.username
         }
       })
     }
   )
 })
+
+const isAdmin = (req, res, next) => {
+  const userId = req.user.id
+
+  db.query('SELECT role FROM user WHERE id = ?', [userId], (err, results) => {
+    if (err || results.length === 0) {
+      return res
+        .status(500)
+        .json({ message: 'Error al verificar el rol del usuario' })
+    }
+
+    if (results[0].role !== 'admin') {
+      return res.status(403).json({ message: 'Acceso denegado' })
+    }
+
+    next()
+  })
+}
+
+module.exports = isAdmin
 
 module.exports = router

@@ -103,10 +103,9 @@ const SubirArchivo = ({ setUploadedFiles }) => {
       setDescription('')
 
       // Actualizar lista de archivos
-      const updatedFiles = await axios.get(
-        `http://localhost:5000/files/${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      const updatedFiles = await axios.get('http://localhost:5000/files', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setUploadedFiles(updatedFiles.data)
 
       // Refrescar categorías
@@ -139,7 +138,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
       fetchCategories()
     } catch (error) {
       console.error('Error al crear la categoría:', error)
-      setError('Hubo un error al crear la categoría.')
+      setError('Error. La categoria ya existe.')
     }
   }
 
@@ -155,16 +154,14 @@ const SubirArchivo = ({ setUploadedFiles }) => {
         }
       )
       setMessage(response.data.message)
+      setCategory('') // Restablecer la selección de categoría
+      setNewCategory('') // Restablecer la nueva categoría
       fetchCategories()
     } catch (error) {
       console.error('Error al eliminar la categoría:', error)
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        setError(`${error.response.data.message}.`)
-      }
+      setError(
+        error.response?.data?.message || 'Error al eliminar la categoría.'
+      )
     }
   }
 
@@ -194,15 +191,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
             </p>
           )}
         </div>
-        {error && (
-          <div className='alert alert-danger mt-3'>
-            {error}
-            <div style={{ fontSize: 'small' }}>
-              Para eliminar una categoría con archivos, primero elimina los
-              archivos.
-            </div>
-          </div>
-        )}
+        {error && <div className='alert alert-danger mt-3'>{error}</div>}
         <div className='mb-3 mt-3'>
           {!newCategory && (
             <>
@@ -218,7 +207,7 @@ const SubirArchivo = ({ setUploadedFiles }) => {
                 >
                   <option value=''>Seleccionar categoría existente</option>
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat.id} value={cat.name}>
                       {cat.name}
                     </option>
                   ))}

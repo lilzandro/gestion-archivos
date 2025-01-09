@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Button,
-  Image,
-  Modal
-} from 'react-bootstrap'
+import { Container, Row, Col, Button, Image, Modal } from 'react-bootstrap'
 import axios from 'axios'
 import { useUser } from './UserContext'
 import { useNavigate } from 'react-router-dom'
 import ProfileComponent from './BarraLateral/Profile/ProfileComponent'
 import NavbarComponent from './Navbar/NavbarComponent'
 import BarraLateral from './BarraLateral/BarraLateral'
-import ContenidoArchivo from './BarraLateral/ContenidoArchivo/ContenidoDelArchivo'
+import ContenidoArchivo from './BarraLateral/BuscarArchivo/BuscarArchivo'
 import ModalCargaArchivos from './ModalArchivo/ModalCargaArchivo'
 import PDFViewer from './PDFViewer'
-import { AiFillFilePdf, AiFillPicture } from 'react-icons/ai'
+import ArchivoCard from './ArchivoCard'
 
 const Dashboard = () => {
   const { setUser } = useUser()
@@ -67,10 +59,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchFiles = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5000/files/${userId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+        const response = await axios.get(`http://localhost:5000/files/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
         setUploadedFiles(response.data)
       } catch (error) {
         console.error('Error al obtener archivos:', error)
@@ -94,6 +85,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('userId')
     localStorage.removeItem('user')
     setUser(null)
     navigate('/login')
@@ -143,81 +135,17 @@ const Dashboard = () => {
                 <div className='uploaded-files p-3 border rounded bg-light'>
                   {uploadedFiles.length > 0 ? (
                     <Row className='gy-4 gx-4 '>
-                      {uploadedFiles.slice(0, 9).map(file =>
-                        file && file.file_name ? (
-                          <Col xs={12} md={4} key={file.id}>
-                            <Card
-                              className='shadow-sm h-100 w-100'
-                              style={{
-                                maxWidth: '300px',
-                                minHeight: '200px',
-                                maxHeight: '250px',
-                                margin: '0 auto'
-                              }}
-                            >
-                              <Card.Body className='d-flex align-items-center'>
-                                {/* Ícono del archivo */}
-                                <span className='fs-1 me-4 m-1'>
-                                  {file.file_name.endsWith('.pdf') ? (
-                                    <AiFillFilePdf color='#FF0000' size={60} />
-                                  ) : (
-                                    <AiFillPicture color='#00A1FF' size={60} />
-                                  )}
-                                </span>
-                                {/* Información del archivo */}
-                                <div
-                                  className='text-truncate'
-                                  style={{ overflow: 'hidden' }}
-                                >
-                                  <Card.Title className='fw-bold text-truncate'>
-                                    {file.file_name}
-                                  </Card.Title>
-                                  <Card.Text>
-                                    <span className='fw-semibold text-primary'>
-                                      Categoría:
-                                    </span>{' '}
-                                    {file.category || (
-                                      <span className='text-muted'>
-                                        Sin categoría
-                                      </span>
-                                    )}
-                                    <br />
-                                    <span className='fw-semibold text-primary'>
-                                      Descripción:
-                                    </span>{' '}
-                                    {file.description || (
-                                      <span className='text-muted'>
-                                        Sin descripción
-                                      </span>
-                                    )}
-                                    <br />
-                                    <span className='fw-semibold text-primary'>
-                                      Subido el:
-                                    </span>{' '}
-                                    {file.created_at
-                                      ? new Date(
-                                          file.created_at
-                                        ).toLocaleDateString()
-                                      : 'Fecha no disponible'}
-                                  </Card.Text>
-                                  <Button
-                                    variant='outline-primary'
-                                    size='sm'
-                                    onClick={() =>
-                                      handleViewFile(
-                                        `http://localhost:5000/${file.file_path}`,
-                                        file.file_name // Aquí pasas el nombre del archivo
-                                      )
-                                    }
-                                  >
-                                    Ver Archivo
-                                  </Button>
-                                </div>
-                              </Card.Body>
-                            </Card>
-                          </Col>
-                        ) : null
-                      )}
+                      {uploadedFiles
+                        .slice(0, 9)
+                        .map(file =>
+                          file && file.file_name ? (
+                            <ArchivoCard
+                              key={file.id}
+                              file={file}
+                              handleViewFile={handleViewFile}
+                            />
+                          ) : null
+                        )}
                     </Row>
                   ) : (
                     <div className='text-center'>
@@ -235,7 +163,10 @@ const Dashboard = () => {
           </div>
         )}
         {activeSection === 'documents' && (
-          <ContenidoArchivo files={uploadedFiles} />
+          <ContenidoArchivo
+            files={uploadedFiles}
+            handleViewFile={handleViewFile}
+          />
         )}
         {activeSection === 'profile' && (
           <ProfileComponent

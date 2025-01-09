@@ -21,3 +21,21 @@ CREATE TABLE categories (
 ALTER TABLE files
 ADD COLUMN category_id INT,
 ADD CONSTRAINT fk_category FOREIGN KEY (category_id) REFERENCES categories(id);
+
+CREATE TABLE user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(255) NOT NULL,
+    apellido VARCHAR(255) NOT NULL,
+    cedula VARCHAR(50) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    CHECK (cedula REGEXP '^[0-9]+$')
+);
+
+ALTER TABLE user
+CHANGE COLUMN email username VARCHAR(255) NOT NULL UNIQUE;
+
+ALTER TABLE user
+ADD COLUMN security_answer1 VARCHAR(255),
+ADD COLUMN security_answer2 VARCHAR(255),
+ADD COLUMN security_answer3 VARCHAR(255);

@@ -1,5 +1,14 @@
 import React, { useState } from 'react'
-import { Form, Button, Container, Card, Alert, Row, Col } from 'react-bootstrap'
+import {
+  Form,
+  Button,
+  Container,
+  Card,
+  Alert,
+  Row,
+  Col,
+  InputGroup
+} from 'react-bootstrap'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -7,13 +16,17 @@ import { useUser } from './UserContext' // Importar el contexto
 
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true)
+  const [showSecurityQuestions, setShowSecurityQuestions] = useState(false)
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
     confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    cedula: ''
+    nombre: '',
+    apellido: '',
+    cedula: '',
+    securityAnswer1: '',
+    securityAnswer2: '',
+    securityAnswer3: ''
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -24,23 +37,22 @@ const AuthForm = ({ onLogin }) => {
     setError('')
     setSuccess('')
     setFormData({
-      email: '',
+      username: '',
       password: '',
       confirmPassword: '',
-      firstName: '',
-      lastName: '',
-      cedula: ''
+      nombre: '',
+      apellido: '',
+      cedula: '',
+      securityAnswer1: '',
+      securityAnswer2: '',
+      securityAnswer3: ''
     })
     setIsLogin(!isLogin)
+    setShowSecurityQuestions(false)
   }
 
   const handleChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
-  }
-
-  const validateEmail = email => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return regex.test(email)
   }
 
   const handleSubmit = async e => {
@@ -48,32 +60,47 @@ const AuthForm = ({ onLogin }) => {
     setError('')
     setSuccess('')
 
-    const { email, password, confirmPassword, nombre, apellido, cedula } =
-      formData
+    const {
+      username,
+      password,
+      confirmPassword,
+      nombre,
+      apellido,
+      cedula,
+      securityAnswer1,
+      securityAnswer2,
+      securityAnswer3
+    } = formData
 
-    if (!validateEmail(email)) {
-      setError('Ingresa un correo válido.')
-      return
-    }
+    // Validaciones
+    const nameRegex = /^[a-zA-Z]+$/
+    const cedulaRegex = /^[0-9]+$/
+    const securityAnswerRegex = /^[a-zA-Z\s]+$/
 
-    if (isLogin) {
-      try {
-        const response = await axios.post('http://localhost:5000/login', {
-          email,
-          password
-        })
-        setUser(response.data.user) // Guardar datos del usuario en el contexto
-        const { token, user } = response.data
-        localStorage.setItem('token', token)
-        localStorage.setItem('userId', response.data.user.id)
-        localStorage.setItem('user', JSON.stringify(user)) // Guardar el token en localStorage
-        setSuccess(response.data.message)
-        onLogin(response.data.user) // Actualizar estado en el componente padre
-        navigate('/dashboard') // Redirigir al dashboard
-      } catch (error) {
-        setError(error.response?.data?.message || 'Error al iniciar sesión.')
+    if (!isLogin) {
+      if (!nameRegex.test(nombre) || !nameRegex.test(apellido)) {
+        setError('El nombre y el apellido solo deben contener letras.')
+        return
       }
-    } else {
+
+      if (!cedulaRegex.test(cedula)) {
+        setError('La cédula solo debe contener números.')
+        return
+      }
+
+      if (showSecurityQuestions) {
+        if (
+          !securityAnswerRegex.test(securityAnswer1) ||
+          !securityAnswerRegex.test(securityAnswer2) ||
+          !securityAnswerRegex.test(securityAnswer3)
+        ) {
+          setError(
+            'Las respuestas de seguridad solo deben contener letras y espacios.'
+          )
+          return
+        }
+      }
+
       if (password.length < 8 || password !== confirmPassword) {
         setError(
           password.length < 8
@@ -82,18 +109,50 @@ const AuthForm = ({ onLogin }) => {
         )
         return
       }
+    }
+
+    if (isLogin) {
+      try {
+        const response = await axios.post('http://localhost:5000/login', {
+          username,
+          password
+        })
+        setUser(response.data.user) // Guardar datos del usuario en el contexto
+        const { token, user } = response.data
+        localStorage.setItem('token', token)
+        localStorage.setItem('userId', user.id)
+        localStorage.setItem('user', JSON.stringify(user)) // Guardar el token en localStorage
+        setSuccess(response.data.message)
+        onLogin(response.data.user) // Actualizar estado en el componente padre
+        navigate('/dashboard') // Redirigir al dashboard
+      } catch (error) {
+        setError(error.response?.data?.message || 'Error al iniciar sesión.')
+      }
+    } else {
+      if (!showSecurityQuestions) {
+        setShowSecurityQuestions(true)
+        return
+      }
 
       try {
         const response = await axios.post('http://localhost:5000/register', {
-          email,
+          username,
           password,
           nombre,
           apellido,
-          cedula
+          cedula,
+          securityAnswer1,
+          securityAnswer2,
+          securityAnswer3
         })
-        setUser(response.data.user) // Guardar datos del usuario en el contexto
+
+        const { user, token } = response.data
+        setUser(user) // Guardar datos del usuario en el contexto
+        localStorage.setItem('token', token) // Guardar el token en localStorage
+        localStorage.setItem('userId', user.id) // Guardar el ID del usuario en localStorage
+        localStorage.setItem('user', JSON.stringify(user)) // Guardar el usuario en localStorage
         setSuccess(response.data.message)
-        onLogin(response.data.user) // Actualizar estado en el componente padre
+        onLogin(user) // Actualizar estado en el componente padre
         navigate('/dashboard') // Redirigir al dashboard
       } catch (error) {
         setError(
@@ -115,8 +174,8 @@ const AuthForm = ({ onLogin }) => {
       <Card
         style={{
           width: '100%',
-          minWidth: '350px',
-          maxWidth: '25em',
+          minWidth: showSecurityQuestions ? '300px' : '300px',
+          maxWidth: showSecurityQuestions ? '800px' : '350px',
           padding: '20px'
         }}
       >
@@ -143,7 +202,7 @@ const AuthForm = ({ onLogin }) => {
               </Alert>
             )}
             <Form onSubmit={handleSubmit} className='mt-4'>
-              {!isLogin && (
+              {!isLogin && !showSecurityQuestions && (
                 <>
                   <Row>
                     <Col md={6}>
@@ -175,54 +234,194 @@ const AuthForm = ({ onLogin }) => {
                   </Row>
                   <Form.Group className='mb-3' controlId='formCedula'>
                     <Form.Label>Cédula</Form.Label>
+                    <InputGroup>
+                      <InputGroup.Text>V-</InputGroup.Text>
+                      <Form.Control
+                        type='text'
+                        placeholder='Ingresa tu cédula'
+                        name='cedula'
+                        value={formData.cedula}
+                        onChange={handleChange}
+                        required
+                      />
+                    </InputGroup>
+                  </Form.Group>
+                  <Form.Group className='mb-3' controlId='formUsername'>
+                    <Form.Label>Nombre de Usuario</Form.Label>
                     <Form.Control
                       type='text'
-                      placeholder='Ingresa tu cédula'
-                      name='cedula'
-                      value={formData.cedula}
+                      placeholder='Ingresa tu nombre de usuario'
+                      name='username'
+                      value={formData.username}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className='mb-3' controlId='formPassword'>
+                    <Form.Label>Contraseña</Form.Label>
+                    <Form.Control
+                      type='password'
+                      placeholder='Ingresa tu contraseña'
+                      name='password'
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className='mb-3' controlId='formConfirmPassword'>
+                    <Form.Label>Confirmar Contraseña</Form.Label>
+                    <Form.Control
+                      type='password'
+                      placeholder='Confirma tu contraseña'
+                      name='confirmPassword'
+                      value={formData.confirmPassword}
                       onChange={handleChange}
                       required
                     />
                   </Form.Group>
                 </>
               )}
-              <Form.Group className='mb-3' controlId='formEmail'>
-                <Form.Label>Correo Electrónico</Form.Label>
-                <Form.Control
-                  type='email'
-                  placeholder='Ingresa tu correo'
-                  name='email'
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-              <Form.Group className='mb-3' controlId='formPassword'>
-                <Form.Label>Contraseña</Form.Label>
-                <Form.Control
-                  type='password'
-                  placeholder='Ingresa tu contraseña'
-                  name='password'
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-              {!isLogin && (
-                <Form.Group className='mb-3' controlId='formConfirmPassword'>
-                  <Form.Label>Confirmar Contraseña</Form.Label>
-                  <Form.Control
-                    type='password'
-                    placeholder='Confirma tu contraseña'
-                    name='confirmPassword'
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
+              {!isLogin && showSecurityQuestions && (
+                <>
+                  <Alert variant='info'>
+                    Las preguntas de seguridad se utilizan para recuperar tu
+                    cuenta en caso de que olvides tu contraseña. Por favor,
+                    proporciona respuestas que puedas recordar fácilmente.
+                  </Alert>
+                  <Row>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityQuestion1'
+                      >
+                        <Form.Label>Pregunta de Seguridad 1</Form.Label>
+                        <Form.Control
+                          type='text'
+                          value='¿Cuál es el nombre de tu primera mascota?'
+                          readOnly
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityAnswer1'
+                      >
+                        <Form.Label>Respuesta 1</Form.Label>
+                        <Form.Control
+                          type='text'
+                          placeholder='Ingresa tu respuesta 1'
+                          name='securityAnswer1'
+                          value={formData.securityAnswer1}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityQuestion2'
+                      >
+                        <Form.Label>Pregunta de Seguridad 2</Form.Label>
+                        <Form.Control
+                          type='text'
+                          value='¿Cuál es el nombre de tu mejor amigo de la infancia?'
+                          readOnly
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityAnswer2'
+                      >
+                        <Form.Label>Respuesta 2</Form.Label>
+                        <Form.Control
+                          type='text'
+                          placeholder='Ingresa tu respuesta 2'
+                          name='securityAnswer2'
+                          value={formData.securityAnswer2}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityQuestion3'
+                      >
+                        <Form.Label>Pregunta de Seguridad 3</Form.Label>
+                        <Form.Control
+                          type='text'
+                          value='¿Cuál es tu comida favorita?'
+                          readOnly
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <Form.Group
+                        className='mb-3'
+                        controlId='formSecurityAnswer3'
+                      >
+                        <Form.Label>Respuesta 3</Form.Label>
+                        <Form.Control
+                          type='text'
+                          placeholder='Ingresa tu respuesta 3'
+                          name='securityAnswer3'
+                          value={formData.securityAnswer3}
+                          onChange={handleChange}
+                          required
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Button
+                    variant='secondary'
+                    onClick={() => setShowSecurityQuestions(false)}
+                    className='w-100 mb-3'
+                  >
+                    Regresar
+                  </Button>
+                </>
+              )}
+              {isLogin && (
+                <>
+                  <Form.Group className='mb-3' controlId='formUsername'>
+                    <Form.Label>Nombre de Usuario</Form.Label>
+                    <Form.Control
+                      type='text'
+                      placeholder='Ingresa tu nombre de usuario'
+                      name='username'
+                      value={formData.username}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                  <Form.Group className='mb-3' controlId='formPassword'>
+                    <Form.Label>Contraseña</Form.Label>
+                    <Form.Control
+                      type='password'
+                      placeholder='Ingresa tu contraseña'
+                      name='password'
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                    />
+                  </Form.Group>
+                </>
               )}
               <Button variant='primary' type='submit' className='w-100'>
-                {isLogin ? 'Ingresar' : 'Registrarse'}
+                {isLogin
+                  ? 'Ingresar'
+                  : showSecurityQuestions
+                  ? 'Registrarse'
+                  : 'Siguiente'}
               </Button>
             </Form>
             <div className='text-center mt-3'>
