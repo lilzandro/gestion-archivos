@@ -95,14 +95,12 @@ const ProfileComponent = ({ userId }) => {
   }
 
   const handlePasswordChange = async () => {
+    const userId = localStorage.getItem('userId')
+
     try {
-      const token = localStorage.getItem('token')
       const response = await axios.post(
         `http://localhost:5000/user/verify-security-answer`,
-        { questionId: selectedQuestion.id, answer: securityAnswer },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { questionId: selectedQuestion.id, answer: securityAnswer, userId }
       )
 
       if (response.data.success) {
@@ -124,14 +122,10 @@ const ProfileComponent = ({ userId }) => {
     }
 
     try {
-      const token = localStorage.getItem('token')
-      await axios.put(
-        `http://localhost:5000/user/${userId}/change-password`,
-        { newPassword },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
+      await axios.put(`http://localhost:5000/user/${userId}/change-password`, {
+        newPassword,
+        userId
+      })
       toast.success('Contraseña cambiada exitosamente')
       setShowPasswordModal(false)
     } catch (err) {
@@ -142,12 +136,8 @@ const ProfileComponent = ({ userId }) => {
 
   const fetchSecurityQuestions = async () => {
     try {
-      const token = localStorage.getItem('token')
       const response = await axios.get(
-        `http://localhost:5000/user/${userId}/security-questions`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        `http://localhost:5000/user/${userId}/security-questions`
       )
       setSecurityQuestions(response.data)
       const randomQuestion =

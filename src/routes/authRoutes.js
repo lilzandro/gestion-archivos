@@ -129,7 +129,6 @@ router.post('/register', async (req, res) => {
     }
   )
 })
-// ...existing code...
 
 // Ruta de login
 router.post('/login', (req, res) => {
@@ -238,7 +237,7 @@ router.put('/user/:id', authenticateToken, (req, res) => {
   )
 })
 
-router.get('/user/:id/security-questions', authenticateToken, (req, res) => {
+router.get('/user/:id/security-questions', (req, res) => {
   const userId = req.params.id
 
   db.query(
@@ -256,9 +255,8 @@ router.get('/user/:id/security-questions', authenticateToken, (req, res) => {
   )
 })
 
-router.post('/user/verify-security-answer', authenticateToken, (req, res) => {
-  const { questionId, answer } = req.body
-  const userId = req.user.id
+router.post('/user/verify-security-answer', (req, res) => {
+  const { questionId, answer, userId } = req.body
 
   db.query(
     'SELECT answer FROM security_answers WHERE user_id = ? AND id = ?',
@@ -285,9 +283,9 @@ router.post('/user/verify-security-answer', authenticateToken, (req, res) => {
   )
 })
 
-router.put('/user/:id/change-password', authenticateToken, async (req, res) => {
-  const userId = req.params.id
-  const { newPassword } = req.body
+router.put('/user/:id/change-password', async (req, res) => {
+  const { newPassword, userId } = req.body
+  console.log(newPassword, userId)
 
   const hashedPassword = await bcrypt.hash(newPassword, 10)
 
@@ -305,6 +303,35 @@ router.put('/user/:id/change-password', authenticateToken, async (req, res) => {
       res.status(200).json({ message: 'Contraseña cambiada exitosamente' })
     }
   )
+})
+
+router.post('/recover', (req, res) => {
+  const { cedula } = req.body
+
+  db.query('SELECT * FROM user WHERE cedula = ?', [cedula], (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        message: 'Error al buscar el usuario por cédula',
+        error: err
+      })
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    const user = results[0]
+    res.status(200).json({
+      message: 'Usuario encontrado',
+      user: {
+        id: user.id,
+        nombre: user.nombre,
+        apellido: user.apellido,
+        username: user.username,
+        cedula: user.cedula
+      }
+    })
+  })
 })
 
 module.exports = isAdmin
