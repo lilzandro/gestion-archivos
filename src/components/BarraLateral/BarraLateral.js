@@ -1,13 +1,15 @@
 import React from 'react'
 import { Button, Image, Offcanvas } from 'react-bootstrap'
+import { useUser } from '../UserContext' // Importa el contexto de usuario
 
 const BarraLateral = ({
   showSidebar,
   toggleSidebar,
-  userProfile,
   setActiveSection,
   handleShowLogoutModal
 }) => {
+  const { user } = useUser() // Obtén la información del usuario desde el contexto
+
   return (
     <>
       {/* Barra lateral en escritorio */}
@@ -20,8 +22,10 @@ const BarraLateral = ({
             height={100}
             alt='Foto de perfil'
           />
-          <h5 className='mt-2'>{userProfile.name}</h5>
-          <p className='text-muted'>{userProfile.role}</p>
+          <h5 className='mt-2'>
+            {user?.nombre} {user?.apellido}
+          </h5>
+          <p className='text-muted'>{user?.role}</p>
           <hr />
         </div>
         <nav className='p-3'>
@@ -68,14 +72,16 @@ const BarraLateral = ({
         <Offcanvas.Body>
           <div className='text-center'>
             <Image
-              src={userProfile.avatar}
+              src='user.png'
               roundedCircle
               width={100}
               height={100}
               alt='Foto de perfil'
             />
-            <h5 className='mt-2'>{userProfile.name}</h5>
-            <p className='text-muted'>{userProfile.role}</p>
+            <h5 className='mt-2'>
+              {user?.nombre} {user?.apellido}
+            </h5>
+            <p className='text-muted'>Rol:{user?.role}</p>
             <hr />
           </div>
           <nav>

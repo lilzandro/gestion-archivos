@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { Form, Button, Container, Card, Alert } from 'react-bootstrap'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
@@ -7,13 +7,10 @@ import { useUser } from '../UserContext'
 import LoginForm from './LoginForm'
 import RegisterForm from './RegisterForm'
 import SecurityQuestions from './PreguntasDeSeguridad'
-import { Toaster, toast } from 'react-hot-toast'
 
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true)
   const [showSecurityQuestions, setShowSecurityQuestions] = useState(false)
-  const [showRecoveryForm, setShowRecoveryForm] = useState(false)
-  const [showChangePasswordForm, setShowChangePasswordForm] = useState(false)
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -28,31 +25,19 @@ const AuthForm = ({ onLogin }) => {
   const [error, setError] = useState('')
   const [securityError, setSecurityError] = useState('')
   const [success, setSuccess] = useState('')
-  const [recoveredUser, setRecoveredUser] = useState(null)
-  const [securityQuestion, setSecurityQuestion] = useState('')
-  const [securityAnswer, setSecurityAnswer] = useState('')
-  const [isSecurityQuestionAnswered, setIsSecurityQuestionAnswered] =
-    useState(false)
   const { setUser } = useUser()
   const navigate = useNavigate()
+
   const nombreRef = useRef(null)
   const apellidoRef = useRef(null)
   const cedulaRef = useRef(null)
   const passwordRef = useRef(null)
   const confirmPasswordRef = useRef(null)
 
-  useEffect(() => {
-    if (error || success || securityError) {
-      const timer = setTimeout(() => {
-        setError('')
-        setSuccess('')
-        setSecurityError('')
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error, success, securityError])
-
-  useEffect(() => {
+  const toggleForm = () => {
+    setError('')
+    setSecurityError('')
+    setSuccess('')
     setFormData({
       username: '',
       password: '',
@@ -64,20 +49,8 @@ const AuthForm = ({ onLogin }) => {
       securityAnswer2: '',
       securityAnswer3: ''
     })
-    setError('')
-    setSecurityError('')
-    setSuccess('')
-    setRecoveredUser(null)
-    setSecurityQuestion('')
-    setSecurityAnswer('')
-    setIsSecurityQuestionAnswered(false)
-    setShowChangePasswordForm(false)
-  }, [isLogin, showRecoveryForm, showSecurityQuestions])
-
-  const toggleForm = () => {
     setIsLogin(!isLogin)
     setShowSecurityQuestions(false)
-    setShowRecoveryForm(false)
   }
 
   const handleChange = e => {
@@ -240,93 +213,6 @@ const AuthForm = ({ onLogin }) => {
     }
   }
 
-  const handleRecoverySubmit = async e => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-
-    try {
-      const response = await axios.post('http://localhost:5000/recover', {
-        cedula: formData.cedula
-      })
-
-      const user = response.data.user
-      setRecoveredUser(user)
-
-      const securityResponse = await axios.get(
-        `http://localhost:5000/user/${user.id}/security-questions`
-      )
-      const securityQuestions = securityResponse.data
-      const randomQuestion =
-        securityQuestions[Math.floor(Math.random() * securityQuestions.length)]
-      setSecurityQuestion(randomQuestion.question)
-      setRecoveredUser({ ...user, securityQuestionId: randomQuestion.id })
-
-      setSuccess(response.data.message)
-    } catch (error) {
-      setError(error.response?.data?.message || 'Error al recuperar la cuenta.')
-    }
-  }
-
-  const handleVerifySecurityAnswer = async () => {
-    try {
-      const response = await axios.post(
-        'http://localhost:5000/user/verify-security-answer',
-        {
-          questionId: recoveredUser.securityQuestionId,
-          answer: securityAnswer,
-          userId: recoveredUser.id
-        }
-      )
-
-      if (response.data.success) {
-        setIsSecurityQuestionAnswered(true)
-        setSuccess(
-          'Respuesta de seguridad correcta. Ahora puedes cambiar tu contraseña.'
-        )
-        setShowChangePasswordForm(true)
-      } else {
-        setError('Respuesta de seguridad incorrecta.')
-      }
-    } catch (err) {
-      console.error('Error al verificar la respuesta de seguridad:', err)
-      setError('Error al verificar la respuesta de seguridad')
-    }
-  }
-
-  const handleChangePasswordSubmit = async e => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden.')
-      return
-    }
-
-    const userId = recoveredUser.id
-
-    try {
-      await axios.put(`http://localhost:5000/user/${userId}/change-password`, {
-        userId: recoveredUser.id,
-        newPassword: formData.password
-      })
-
-      setSuccess(
-        'Contraseña cambiada exitosamente. Ahora puedes iniciar sesión.'
-      )
-      toast.success(
-        'Contraseña cambiada exitosamente. Ahora puedes iniciar sesión.'
-      )
-      setShowChangePasswordForm(false)
-      setShowRecoveryForm(false)
-    } catch (error) {
-      setError(
-        error.response?.data?.message || 'Error al cambiar la contraseña.'
-      )
-    }
-  }
-
   const formVariants = {
     initial: { opacity: 0, x: isLogin ? 100 : -100 },
     animate: { opacity: 1, x: 0 },
@@ -353,11 +239,7 @@ const AuthForm = ({ onLogin }) => {
             transition={{ duration: 0.5 }}
           >
             <h3 className='text-center'>
-              {isLogin
-                ? showRecoveryForm
-                  ? 'Recuperar Contraseña'
-                  : 'Iniciar Sesión'
-                : 'Registrar Usuario'}
+              {isLogin ? 'Iniciar Sesión' : 'Registrar Usuario'}
             </h3>
             {error && (
               <Alert variant='danger' className='mt-3'>
@@ -369,108 +251,11 @@ const AuthForm = ({ onLogin }) => {
                 {success}
               </Alert>
             )}
-            <Form
-              onSubmit={
-                showChangePasswordForm
-                  ? handleChangePasswordSubmit
-                  : showRecoveryForm
-                  ? handleRecoverySubmit
-                  : handleSubmit
-              }
-              className='mt-4'
-            >
-              {isLogin && !showRecoveryForm && !showChangePasswordForm && (
+            <Form onSubmit={handleSubmit} className='mt-4'>
+              {isLogin && (
                 <LoginForm formData={formData} handleChange={handleChange} />
               )}
-              {isLogin && showRecoveryForm && !showChangePasswordForm && (
-                <>
-                  <Form.Group className='mb-3' controlId='formCedula'>
-                    <Form.Label>Cédula</Form.Label>
-                    <Form.Control
-                      type='text'
-                      placeholder='Ingresa tu cédula'
-                      name='cedula'
-                      value={formData.cedula}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                  {recoveredUser && (
-                    <div className='mt-3'>
-                      <p>
-                        <strong>Nombre:</strong> {recoveredUser.nombre}
-                      </p>
-                      <p>
-                        <strong>Apellido:</strong> {recoveredUser.apellido}
-                      </p>
-                      <p>
-                        <strong>Nombre de Usuario:</strong>{' '}
-                        {recoveredUser.username}
-                      </p>
-                      <Form.Group className='mb-3'>
-                        <Form.Label>Pregunta de Seguridad</Form.Label>
-                        <Form.Control
-                          type='text'
-                          value={securityQuestion || ''}
-                          readOnly
-                        />
-                      </Form.Group>
-                      <Form.Group className='mb-3'>
-                        <Form.Label>Respuesta</Form.Label>
-                        <Form.Control
-                          type='text'
-                          value={securityAnswer || ''}
-                          onChange={e => setSecurityAnswer(e.target.value)}
-                        />
-                      </Form.Group>
-                      <p className='text-muted'>
-                        Necesitamos la respuesta de seguridad para verificar tu
-                        identidad y proteger tu cuenta.
-                      </p>
-                      <Button
-                        variant='primary'
-                        className='w-100 mb-3'
-                        onClick={handleVerifySecurityAnswer}
-                      >
-                        Verificar Respuesta
-                      </Button>
-                    </div>
-                  )}
-                </>
-              )}
-              {showChangePasswordForm && (
-                <>
-                  <Form.Group className='mb-3' controlId='formNewPassword'>
-                    <Form.Label>Nueva Contraseña</Form.Label>
-                    <Form.Control
-                      type='password'
-                      placeholder='Ingresa tu nueva contraseña'
-                      name='password'
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                  <Form.Group
-                    className='mb-3'
-                    controlId='formConfirmNewPassword'
-                  >
-                    <Form.Label>Confirmar Nueva Contraseña</Form.Label>
-                    <Form.Control
-                      type='password'
-                      placeholder='Confirma tu nueva contraseña'
-                      name='confirmPassword'
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-                  <Button variant='primary' type='submit' className='w-100'>
-                    Cambiar Contraseña
-                  </Button>
-                </>
-              )}
-              {!isLogin && !showSecurityQuestions && !showChangePasswordForm && (
+              {!isLogin && !showSecurityQuestions && (
                 <RegisterForm
                   formData={formData}
                   handleChange={handleChange}
@@ -483,7 +268,7 @@ const AuthForm = ({ onLogin }) => {
                   }}
                 />
               )}
-              {!isLogin && showSecurityQuestions && !showChangePasswordForm && (
+              {!isLogin && showSecurityQuestions && (
                 <SecurityQuestions
                   formData={formData}
                   handleChange={handleChange}
@@ -491,17 +276,13 @@ const AuthForm = ({ onLogin }) => {
                   setShowSecurityQuestions={setShowSecurityQuestions}
                 />
               )}
-              {!showChangePasswordForm && (
-                <Button variant='primary' type='submit' className='w-100'>
-                  {isLogin
-                    ? showRecoveryForm
-                      ? 'Buscar'
-                      : 'Ingresar'
-                    : showSecurityQuestions
-                    ? 'Registrarse'
-                    : 'Siguiente'}
-                </Button>
-              )}
+              <Button variant='primary' type='submit' className='w-100'>
+                {isLogin
+                  ? 'Ingresar'
+                  : showSecurityQuestions
+                  ? 'Registrarse'
+                  : 'Siguiente'}
+              </Button>
             </Form>
             <div className='text-center mt-3'>
               <Button
@@ -513,29 +294,10 @@ const AuthForm = ({ onLogin }) => {
                   ? '¿No tienes cuenta? Regístrate'
                   : '¿Ya tienes cuenta? Inicia sesión'}
               </Button>
-              {isLogin && !showRecoveryForm && (
-                <Button
-                  variant='link'
-                  onClick={() => setShowRecoveryForm(true)}
-                  className='text-decoration-none'
-                >
-                  ¿Olvidaste tu contraseña?
-                </Button>
-              )}
-              {isLogin && showRecoveryForm && (
-                <Button
-                  variant='link'
-                  onClick={() => setShowRecoveryForm(false)}
-                  className='text-decoration-none'
-                >
-                  Regresar al inicio de sesión
-                </Button>
-              )}
             </div>
           </motion.div>
         </AnimatePresence>
       </Card>
-      <Toaster />
     </Container>
   )
 }
