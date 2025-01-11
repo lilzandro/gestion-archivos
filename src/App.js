@@ -6,7 +6,7 @@ import {
   Navigate
 } from 'react-router-dom'
 import Dashboard from './components/Dashboard'
-import Login from './components/Login'
+import Login from './components/InicioDeSecion/Login'
 import { UserProvider, useUser } from './components/UserContext' // Importar UserProvider y hook de contexto
 import axios from 'axios'
 
@@ -46,10 +46,6 @@ const AppContent = () => {
       <Routes>
         <Route
           path='/login'
-          element={user ? <Navigate to='/dashboard' /> : <Login />}
-        />
-        <Route
-          path='/register'
           element={user ? <Navigate to='/dashboard' /> : <Login />}
         />
         <Route
