@@ -204,6 +204,7 @@ const Dashboard = () => {
         )}
         {activeSection === 'profile' && (
           <ProfileComponent
+            userId={userId}
             userProfile={userProfile}
             onDeleteAccount={() => {
               console.log('Cuenta eliminada')

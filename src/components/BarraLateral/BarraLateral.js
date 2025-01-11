@@ -14,7 +14,7 @@ const BarraLateral = ({
       <div className='sidebar d-none d-lg-block'>
         <div className='text-center p-3'>
           <Image
-            src={userProfile.avatar}
+            src='user.png'
             roundedCircle
             width={100}
             height={100}

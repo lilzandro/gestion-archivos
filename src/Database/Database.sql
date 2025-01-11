@@ -41,3 +41,11 @@ ADD COLUMN security_answer2 VARCHAR(255),
 ADD COLUMN security_answer3 VARCHAR(255);
 ALTER TABLE user
 ADD COLUMN role ENUM('admin', 'user') DEFAULT 'user';
+
+CREATE TABLE security_answers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  question VARCHAR(255) NOT NULL,
+  answer VARCHAR(255) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES user(id)
+);

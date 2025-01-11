@@ -55,6 +55,7 @@ const AuthForm = ({ onLogin }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
+  // ...existing code...
   const handleSubmit = async e => {
     e.preventDefault()
     setError('')
@@ -141,9 +142,20 @@ const AuthForm = ({ onLogin }) => {
           nombre,
           apellido,
           cedula,
-          securityAnswer1,
-          securityAnswer2,
-          securityAnswer3
+          securityAnswers: [
+            {
+              question: '¿Cuál es el nombre de tu primera mascota?',
+              answer: securityAnswer1
+            },
+            {
+              question: '¿Cuál es el nombre de tu mejor amigo de la infancia?',
+              answer: securityAnswer2
+            },
+            {
+              question: '¿Cuál es tu comida favorita?',
+              answer: securityAnswer3
+            }
+          ]
         })
 
         const { user, token } = response.data
@@ -161,6 +173,7 @@ const AuthForm = ({ onLogin }) => {
       }
     }
   }
+  // ...existing code...
 
   // Animaciones
   const formVariants = {
