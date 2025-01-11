@@ -4,7 +4,7 @@ import { Card, Button, Image, Row, Col, Spinner } from 'react-bootstrap'
 import { Toaster, toast } from 'react-hot-toast'
 import EditModal from './EditModal'
 import PasswordModal from './PasswordModal'
-import NewPasswordModal from './NewPasswordModal'
+import SecurityQuestionModal from './SecurityQuestionModal'
 
 const ProfileComponent = ({ userId }) => {
   const [userData, setUserData] = useState(null)
@@ -13,16 +13,14 @@ const ProfileComponent = ({ userId }) => {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editedData, setEditedData] = useState({})
   const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [showNewPasswordModal, setShowNewPasswordModal] = useState(false)
+  const [showSecurityQuestionModal, setShowSecurityQuestionModal] =
+    useState(false)
   const [securityAnswer, setSecurityAnswer] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [securityQuestion, setSecurityQuestion] = useState('')
-
-  const securityQuestions = [
-    { id: 1, question: '¿Cuál es el nombre de tu primera mascota?' },
-    { id: 2, question: '¿Cuál es el nombre de tu amigo de la infancia?' },
-    { id: 3, question: '¿Cuál es tu comida favorita?' }
-  ]
+  const [confirmPassword, setConfirmPassword] = useState('')
+  // eslint-disable-next-line no-unused-vars
+  const [securityQuestions, setSecurityQuestions] = useState([])
+  const [selectedQuestion, setSelectedQuestion] = useState(null)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -88,20 +86,28 @@ const ProfileComponent = ({ userId }) => {
     setSecurityAnswer(e.target.value)
   }
 
+  const handleNewPasswordChange = e => {
+    setNewPassword(e.target.value)
+  }
+
+  const handleConfirmPasswordChange = e => {
+    setConfirmPassword(e.target.value)
+  }
+
   const handlePasswordChange = async () => {
     try {
       const token = localStorage.getItem('token')
       const response = await axios.post(
         `http://localhost:5000/user/verify-security-answer`,
-        { questionId: securityQuestion.id, answer: securityAnswer },
+        { questionId: selectedQuestion.id, answer: securityAnswer },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
 
       if (response.data.success) {
-        setShowPasswordModal(false)
-        setShowNewPasswordModal(true)
+        setShowSecurityQuestionModal(false)
+        setShowPasswordModal(true)
       } else {
         toast.error('Respuesta de seguridad incorrecta')
       }
@@ -111,7 +117,12 @@ const ProfileComponent = ({ userId }) => {
     }
   }
 
-  const handleNewPasswordChange = async () => {
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
+
     try {
       const token = localStorage.getItem('token')
       await axios.put(
@@ -122,10 +133,29 @@ const ProfileComponent = ({ userId }) => {
         }
       )
       toast.success('Contraseña cambiada exitosamente')
-      setShowNewPasswordModal(false)
+      setShowPasswordModal(false)
     } catch (err) {
       console.error('Error al cambiar la contraseña:', err)
       toast.error('Error al cambiar la contraseña')
+    }
+  }
+
+  const fetchSecurityQuestions = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get(
+        `http://localhost:5000/user/${userId}/security-questions`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      setSecurityQuestions(response.data)
+      const randomQuestion =
+        response.data[Math.floor(Math.random() * response.data.length)]
+      setSelectedQuestion(randomQuestion)
+    } catch (err) {
+      console.error('Error al obtener las preguntas de seguridad:', err)
+      toast.error('Error al obtener las preguntas de seguridad')
     }
   }
 
@@ -212,12 +242,8 @@ const ProfileComponent = ({ userId }) => {
                   padding: '10px 20px'
                 }}
                 onClick={() => {
-                  const randomQuestion =
-                    securityQuestions[
-                      Math.floor(Math.random() * securityQuestions.length)
-                    ]
-                  setSecurityQuestion(randomQuestion)
-                  setShowPasswordModal(true)
+                  fetchSecurityQuestions()
+                  setShowSecurityQuestionModal(true)
                 }}
               >
                 Cambiar Contraseña
@@ -235,21 +261,23 @@ const ProfileComponent = ({ userId }) => {
         handleSaveChanges={handleSaveChanges}
       />
 
-      <PasswordModal
-        show={showPasswordModal}
-        onHide={() => setShowPasswordModal(false)}
-        securityQuestion={securityQuestion}
+      <SecurityQuestionModal
+        show={showSecurityQuestionModal}
+        onHide={() => setShowSecurityQuestionModal(false)}
+        question={selectedQuestion?.question}
         securityAnswer={securityAnswer}
         handleSecurityAnswerChange={handleSecurityAnswerChange}
         handlePasswordChange={handlePasswordChange}
       />
 
-      <NewPasswordModal
-        show={showNewPasswordModal}
-        onHide={() => setShowNewPasswordModal(false)}
+      <PasswordModal
+        show={showPasswordModal}
+        onHide={() => setShowPasswordModal(false)}
         newPassword={newPassword}
-        setNewPassword={setNewPassword}
+        confirmPassword={confirmPassword}
         handleNewPasswordChange={handleNewPasswordChange}
+        handleConfirmPasswordChange={handleConfirmPasswordChange}
+        handleChangePassword={handleChangePassword}
       />
     </div>
   )

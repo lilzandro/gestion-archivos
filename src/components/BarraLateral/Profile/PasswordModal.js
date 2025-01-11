@@ -4,10 +4,11 @@ import { Modal, Button, Form } from 'react-bootstrap'
 const PasswordModal = ({
   show,
   onHide,
-  securityQuestion,
-  securityAnswer,
-  handleSecurityAnswerChange,
-  handlePasswordChange
+  newPassword,
+  confirmPassword,
+  handleNewPasswordChange,
+  handleConfirmPasswordChange,
+  handleChangePassword
 }) => {
   return (
     <Modal show={show} onHide={onHide}>
@@ -15,17 +16,21 @@ const PasswordModal = ({
         <Modal.Title>Cambiar Contraseña</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p>
-          Para cambiar la contraseña, por favor responde la siguiente pregunta
-          de seguridad:
-        </p>
         <Form>
           <Form.Group className='mb-3'>
-            <Form.Label>{securityQuestion}</Form.Label>
+            <Form.Label>Nueva Contraseña</Form.Label>
             <Form.Control
-              type='text'
-              value={securityAnswer}
-              onChange={handleSecurityAnswerChange}
+              type='password'
+              value={newPassword}
+              onChange={handleNewPasswordChange}
+            />
+          </Form.Group>
+          <Form.Group className='mb-3'>
+            <Form.Label>Confirmar Nueva Contraseña</Form.Label>
+            <Form.Control
+              type='password'
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
             />
           </Form.Group>
         </Form>
@@ -34,8 +39,8 @@ const PasswordModal = ({
         <Button variant='secondary' onClick={onHide}>
           Cancelar
         </Button>
-        <Button variant='primary' onClick={handlePasswordChange}>
-          Verificar
+        <Button variant='primary' onClick={handleChangePassword}>
+          Cambiar Contraseña
         </Button>
       </Modal.Footer>
     </Modal>

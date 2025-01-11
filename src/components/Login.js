@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   Form,
   Button,
@@ -29,12 +29,21 @@ const AuthForm = ({ onLogin }) => {
     securityAnswer3: ''
   })
   const [error, setError] = useState('')
+  const [securityError, setSecurityError] = useState('')
   const [success, setSuccess] = useState('')
   const { setUser } = useUser() // Obtener `setUser` del contexto
   const navigate = useNavigate() // Hook para navegación
 
+  // Crear referencias para los campos del formulario
+  const nombreRef = useRef(null)
+  const apellidoRef = useRef(null)
+  const cedulaRef = useRef(null)
+  const passwordRef = useRef(null)
+  const confirmPasswordRef = useRef(null)
+
   const toggleForm = () => {
     setError('')
+    setSecurityError('')
     setSuccess('')
     setFormData({
       username: '',
@@ -55,105 +64,125 @@ const AuthForm = ({ onLogin }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  // ...existing code...
+  const validateFormData = () => {
+    const { password, confirmPassword, nombre, apellido, cedula, username } =
+      formData
+
+    const nameRegex = /^[a-zA-Z]+$/
+    const cedulaRegex = /^[0-9]+$/
+
+    if (!nameRegex.test(nombre) || nombre.length < 3 || nombre.length > 15) {
+      setError('El nombre debe contener entre 3 y 15 caracteres alfabeticos.')
+      nombreRef.current.focus()
+      return false
+    }
+
+    if (
+      !nameRegex.test(apellido) ||
+      apellido.length < 5 ||
+      apellido.length > 15
+    ) {
+      setError('El apellido debe contener entre 5 y 15 caracteres alfabeticos.')
+      apellidoRef.current.focus()
+      return false
+    }
+
+    if (!cedulaRegex.test(cedula) || cedula.length < 7 || cedula.length > 15) {
+      setError('La cédula debe contener entre 7 y 15 caracteres.')
+      cedulaRef.current.focus()
+      return false
+    }
+
+    if (username.length < 6 || username.length > 20) {
+      setError('El nombre de usuario debe tener entre 6 y 20 caracteres.')
+      return false
+    }
+
+    if (password.length < 8 || password.length > 20) {
+      setError('La contraseña debe tener entre 8 y 20 caracteres.')
+      passwordRef.current.focus()
+      return false
+    }
+
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.')
+      confirmPasswordRef.current.focus()
+      return false
+    }
+
+    return true
+  }
+
+  const validateSecurityAnswers = () => {
+    const answerRegex = /^[a-zA-Z]{3,20}$/
+    const { securityAnswer1, securityAnswer2, securityAnswer3 } = formData
+
+    if (!answerRegex.test(securityAnswer1)) {
+      setSecurityError(
+        'La respuesta 1 debe contener entre 3 y 20 caracteres alfabéticos.'
+      )
+      return false
+    }
+
+    if (!answerRegex.test(securityAnswer2)) {
+      setSecurityError(
+        'La respuesta 2 debe contener entre 3 y 20 caracteres alfabéticos.'
+      )
+      return false
+    }
+
+    if (!answerRegex.test(securityAnswer3)) {
+      setSecurityError(
+        'La respuesta 3 debe contener entre 3 y 20 caracteres alfabéticos.'
+      )
+      return false
+    }
+
+    return true
+  }
+
   const handleSubmit = async e => {
     e.preventDefault()
     setError('')
+    setSecurityError('')
     setSuccess('')
 
-    const {
-      username,
-      password,
-      confirmPassword,
-      nombre,
-      apellido,
-      cedula,
-      securityAnswer1,
-      securityAnswer2,
-      securityAnswer3
-    } = formData
-
-    // Validaciones
-    const nameRegex = /^[a-zA-Z]+$/
-    const cedulaRegex = /^[0-9]+$/
-    const securityAnswerRegex = /^[a-zA-Z\s]+$/
-
-    if (!isLogin) {
-      if (!nameRegex.test(nombre) || !nameRegex.test(apellido)) {
-        setError('El nombre y el apellido solo deben contener letras.')
-        return
-      }
-
-      if (!cedulaRegex.test(cedula)) {
-        setError('La cédula solo debe contener números.')
-        return
-      }
-
-      if (showSecurityQuestions) {
-        if (
-          !securityAnswerRegex.test(securityAnswer1) ||
-          !securityAnswerRegex.test(securityAnswer2) ||
-          !securityAnswerRegex.test(securityAnswer3)
-        ) {
-          setError(
-            'Las respuestas de seguridad solo deben contener letras y espacios.'
-          )
-          return
-        }
-      }
-
-      if (password.length < 8 || password !== confirmPassword) {
-        setError(
-          password.length < 8
-            ? 'La contraseña debe tener al menos 8 caracteres.'
-            : 'Las contraseñas no coinciden.'
-        )
-        return
-      }
-    }
-
     if (isLogin) {
-      try {
-        const response = await axios.post('http://localhost:5000/login', {
-          username,
-          password
-        })
-        setUser(response.data.user) // Guardar datos del usuario en el contexto
-        const { token, user } = response.data
-        localStorage.setItem('token', token)
-        localStorage.setItem('userId', user.id)
-        localStorage.setItem('user', JSON.stringify(user)) // Guardar el token en localStorage
-        setSuccess(response.data.message)
-        onLogin(response.data.user) // Actualizar estado en el componente padre
-        navigate('/dashboard') // Redirigir al dashboard
-      } catch (error) {
-        setError(error.response?.data?.message || 'Error al iniciar sesión.')
-      }
+      // ...existing code...
     } else {
       if (!showSecurityQuestions) {
-        setShowSecurityQuestions(true)
+        if (validateFormData()) {
+          setShowSecurityQuestions(true)
+        } else {
+          setShowSecurityQuestions(false) // Forzar regreso al formulario inicial si hay errores
+        }
+        return
+      }
+
+      if (!validateFormData() || !validateSecurityAnswers()) {
+        setShowSecurityQuestions(true) // Mantener en el formulario de preguntas de seguridad si hay errores
         return
       }
 
       try {
         const response = await axios.post('http://localhost:5000/register', {
-          username,
-          password,
-          nombre,
-          apellido,
-          cedula,
+          username: formData.username,
+          password: formData.password,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          cedula: formData.cedula,
           securityAnswers: [
             {
               question: '¿Cuál es el nombre de tu primera mascota?',
-              answer: securityAnswer1
+              answer: formData.securityAnswer1
             },
             {
               question: '¿Cuál es el nombre de tu mejor amigo de la infancia?',
-              answer: securityAnswer2
+              answer: formData.securityAnswer2
             },
             {
               question: '¿Cuál es tu comida favorita?',
-              answer: securityAnswer3
+              answer: formData.securityAnswer3
             }
           ]
         })
@@ -170,10 +199,10 @@ const AuthForm = ({ onLogin }) => {
         setError(
           error.response?.data?.message || 'Error al registrar el usuario.'
         )
+        setShowSecurityQuestions(false) // Regresar al formulario inicial si hay errores
       }
     }
   }
-  // ...existing code...
 
   // Animaciones
   const formVariants = {
@@ -227,6 +256,7 @@ const AuthForm = ({ onLogin }) => {
                           name='nombre'
                           value={formData.nombre}
                           onChange={handleChange}
+                          ref={nombreRef} // Asignar referencia
                           required
                         />
                       </Form.Group>
@@ -240,6 +270,7 @@ const AuthForm = ({ onLogin }) => {
                           name='apellido'
                           value={formData.apellido}
                           onChange={handleChange}
+                          ref={apellidoRef} // Asignar referencia
                           required
                         />
                       </Form.Group>
@@ -255,6 +286,7 @@ const AuthForm = ({ onLogin }) => {
                         name='cedula'
                         value={formData.cedula}
                         onChange={handleChange}
+                        ref={cedulaRef} // Asignar referencia
                         required
                       />
                     </InputGroup>
@@ -278,6 +310,7 @@ const AuthForm = ({ onLogin }) => {
                       name='password'
                       value={formData.password}
                       onChange={handleChange}
+                      ref={passwordRef} // Asignar referencia
                       required
                     />
                   </Form.Group>
@@ -289,6 +322,7 @@ const AuthForm = ({ onLogin }) => {
                       name='confirmPassword'
                       value={formData.confirmPassword}
                       onChange={handleChange}
+                      ref={confirmPasswordRef} // Asignar referencia
                       required
                     />
                   </Form.Group>
@@ -301,6 +335,11 @@ const AuthForm = ({ onLogin }) => {
                     cuenta en caso de que olvides tu contraseña. Por favor,
                     proporciona respuestas que puedas recordar fácilmente.
                   </Alert>
+                  {securityError && (
+                    <Alert variant='danger' className='mt-3'>
+                      {securityError}
+                    </Alert>
+                  )}
                   <Row>
                     <Col xs={12} md={6}>
                       <Form.Group
