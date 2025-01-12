@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Form, Button, Container, Card, Alert } from 'react-bootstrap'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
@@ -7,10 +7,12 @@ import { useUser } from '../UserContext'
 import LoginForm from './LoginForm'
 import RegisterForm from './RegisterForm'
 import SecurityQuestions from './PreguntasDeSeguridad'
+import { Toaster, toast } from 'react-hot-toast'
 
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true)
   const [showSecurityQuestions, setShowSecurityQuestions] = useState(false)
+  const [showRecoverPassword, setShowRecoverPassword] = useState(false) // Nuevo estado
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -34,6 +36,14 @@ const AuthForm = ({ onLogin }) => {
   const passwordRef = useRef(null)
   const confirmPasswordRef = useRef(null)
 
+  useEffect(() => {
+    const passwordChangeSuccess = localStorage.getItem('passwordChangeSuccess')
+    if (passwordChangeSuccess) {
+      toast.success(passwordChangeSuccess)
+      localStorage.removeItem('passwordChangeSuccess')
+    }
+  }, [])
+
   const toggleForm = () => {
     setError('')
     setSecurityError('')
@@ -51,6 +61,7 @@ const AuthForm = ({ onLogin }) => {
     })
     setIsLogin(!isLogin)
     setShowSecurityQuestions(false)
+    setShowRecoverPassword(false) // Resetear el estado
   }
 
   const handleChange = e => {
@@ -213,6 +224,33 @@ const AuthForm = ({ onLogin }) => {
     }
   }
 
+  const handleRecoverPassword = async e => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await axios.post(
+        'http://localhost:5000/recover-password',
+        {
+          cedula: formData.cedula,
+          newPassword: formData.password
+        }
+      )
+
+      setSuccess(response.data.message)
+      setShowRecoverPassword(false)
+    } catch (error) {
+      setError(
+        error.response?.data?.message || 'Error al recuperar la contraseña.'
+      )
+    }
+  }
+
+  const handleForgotPassword = () => {
+    navigate('/recover-password')
+  }
+
   const formVariants = {
     initial: { opacity: 0, x: isLogin ? 100 : -100 },
     animate: { opacity: 1, x: 0 },
@@ -221,6 +259,7 @@ const AuthForm = ({ onLogin }) => {
 
   return (
     <Container className='d-flex justify-content-center align-items-center vh-100'>
+      <Toaster />
       <Card
         style={{
           width: '100%',
@@ -231,7 +270,9 @@ const AuthForm = ({ onLogin }) => {
       >
         <AnimatePresence mode='wait'>
           <motion.div
-            key={isLogin ? 'login' : 'register'}
+            key={
+              isLogin ? 'login' : showRecoverPassword ? 'recover' : 'register'
+            }
             variants={formVariants}
             initial='initial'
             animate='animate'
@@ -239,7 +280,11 @@ const AuthForm = ({ onLogin }) => {
             transition={{ duration: 0.5 }}
           >
             <h3 className='text-center'>
-              {isLogin ? 'Iniciar Sesión' : 'Registrar Usuario'}
+              {isLogin
+                ? 'Iniciar Sesión'
+                : showRecoverPassword
+                ? 'Recuperar Contraseña'
+                : 'Registrar Usuario'}
             </h3>
             {error && (
               <Alert variant='danger' className='mt-3'>
@@ -251,11 +296,20 @@ const AuthForm = ({ onLogin }) => {
                 {success}
               </Alert>
             )}
-            <Form onSubmit={handleSubmit} className='mt-4'>
+            <Form
+              onSubmit={
+                isLogin
+                  ? handleSubmit
+                  : showRecoverPassword
+                  ? handleRecoverPassword
+                  : handleSubmit
+              }
+              className='mt-4'
+            >
               {isLogin && (
                 <LoginForm formData={formData} handleChange={handleChange} />
               )}
-              {!isLogin && !showSecurityQuestions && (
+              {!isLogin && !showSecurityQuestions && !showRecoverPassword && (
                 <RegisterForm
                   formData={formData}
                   handleChange={handleChange}
@@ -279,6 +333,8 @@ const AuthForm = ({ onLogin }) => {
               <Button variant='primary' type='submit' className='w-100'>
                 {isLogin
                   ? 'Ingresar'
+                  : showRecoverPassword
+                  ? 'Recuperar Contraseña'
                   : showSecurityQuestions
                   ? 'Registrarse'
                   : 'Siguiente'}
@@ -294,6 +350,15 @@ const AuthForm = ({ onLogin }) => {
                   ? '¿No tienes cuenta? Regístrate'
                   : '¿Ya tienes cuenta? Inicia sesión'}
               </Button>
+              {isLogin && (
+                <Button
+                  variant='link'
+                  onClick={handleForgotPassword}
+                  className='text-decoration-none'
+                >
+                  ¿Olvidaste tu contraseña?
+                </Button>
+              )}
             </div>
           </motion.div>
         </AnimatePresence>

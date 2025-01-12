@@ -128,9 +128,12 @@ const ProfileComponent = ({ userId }) => {
       })
       toast.success('Contraseña cambiada exitosamente')
       setShowPasswordModal(false)
+      setNewPassword('') // Limpiar el campo de nueva contraseña
+      setConfirmPassword('') // Limpiar el campo de confirmación de contraseña
+      setSecurityAnswer('') // Limpiar el campo de respuesta de seguridad
+      setSelectedQuestion(null) // Limpiar la pregunta de seguridad seleccionada
     } catch (err) {
-      console.error('Error al cambiar la contraseña:', err)
-      toast.error('Error al cambiar la contraseña')
+      toast.error('La nueva contraseña no puede ser la misma que la actual')
     }
   }
 

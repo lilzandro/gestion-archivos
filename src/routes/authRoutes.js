@@ -285,22 +285,44 @@ router.post('/user/verify-security-answer', (req, res) => {
 
 router.put('/user/:id/change-password', async (req, res) => {
   const { newPassword, userId } = req.body
-  console.log(newPassword, userId)
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10)
-
+  // Obtener la contraseña actual del usuario
   db.query(
-    'UPDATE user SET password = ? WHERE id = ?',
-    [hashedPassword, userId],
-    (err, results) => {
+    'SELECT password FROM user WHERE id = ?',
+    [userId],
+    async (err, results) => {
       if (err) {
         return res.status(500).json({
-          message: 'Error al cambiar la contraseña',
+          message: 'Error al obtener la contraseña actual',
           error: err
         })
       }
 
-      res.status(200).json({ message: 'Contraseña cambiada exitosamente' })
+      const currentPassword = results[0].password
+      const passwordMatch = await bcrypt.compare(newPassword, currentPassword)
+
+      if (passwordMatch) {
+        return res.status(400).json({
+          message: 'La nueva contraseña no puede ser la misma que la actual'
+        })
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+      db.query(
+        'UPDATE user SET password = ? WHERE id = ?',
+        [hashedPassword, userId],
+        (err, results) => {
+          if (err) {
+            return res.status(500).json({
+              message: 'Error al cambiar la contraseña',
+              error: err
+            })
+          }
+
+          res.status(200).json({ message: 'Contraseña cambiada exitosamente' })
+        }
+      )
     }
   )
 })

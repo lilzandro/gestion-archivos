@@ -1,5 +1,5 @@
-import React from 'react'
-import { Modal, Button, Form } from 'react-bootstrap'
+import React, { useState } from 'react'
+import { Modal, Button, Form, Alert } from 'react-bootstrap'
 
 const PasswordModal = ({
   show,
@@ -10,12 +10,24 @@ const PasswordModal = ({
   handleConfirmPasswordChange,
   handleChangePassword
 }) => {
+  const [error, setError] = useState('')
+
+  const handlePasswordChange = () => {
+    if (newPassword.length < 8 || newPassword.length > 20) {
+      setError('La contraseña debe tener entre 8 y 20 caracteres.')
+      return
+    }
+    setError('')
+    handleChangePassword()
+  }
+
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
         <Modal.Title>Cambiar Contraseña</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {error && <Alert variant='danger'>{error}</Alert>}
         <Form>
           <Form.Group className='mb-3'>
             <Form.Label>Nueva Contraseña</Form.Label>
@@ -39,7 +51,7 @@ const PasswordModal = ({
         <Button variant='secondary' onClick={onHide}>
           Cancelar
         </Button>
-        <Button variant='primary' onClick={handleChangePassword}>
+        <Button variant='primary' onClick={handlePasswordChange}>
           Cambiar Contraseña
         </Button>
       </Modal.Footer>

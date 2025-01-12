@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom'
 import Dashboard from './components/Dashboard'
 import Login from './components/InicioDeSecion/Login'
+import RecoverPasswordForm from './components/InicioDeSecion/RecoverPasswordForm' // Importar el nuevo componente
 import { UserProvider, useUser } from './components/UserContext' // Importar UserProvider y hook de contexto
 import axios from 'axios'
 
@@ -52,6 +53,8 @@ const AppContent = () => {
           path='/dashboard'
           element={user ? <Dashboard /> : <Navigate to='/login' />}
         />
+        <Route path='/recover-password' element={<RecoverPasswordForm />} />{' '}
+        {/* Nueva ruta para recuperación de contraseña */}
         <Route path='/' element={<Navigate to='/login' />} />
       </Routes>
     </Router>
