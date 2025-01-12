@@ -153,7 +153,7 @@ const RecoverPasswordForm = () => {
         'passwordChangeSuccess',
         'Contraseña cambiada exitosamente'
       )
-      toast.success('Contraseña cambiada exitosamente', { duration: 4000 })
+
       navigate('/login')
     } catch (err) {
       if (
