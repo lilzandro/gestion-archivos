@@ -24,9 +24,18 @@ const AuthForm = ({ onLogin }) => {
     securityAnswer2: '',
     securityAnswer3: ''
   })
+
+  //MANEJO DE ESTADO DE LOS ERROES Y EXITOS
   const [error, setError] = useState('')
   const [securityError, setSecurityError] = useState('')
   const [success, setSuccess] = useState('')
+  const [cedulaError, setCedulaError] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [nombreError, setNombreError] = useState('')
+  const [apellidoError, setApellidoError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
+
   const { setUser } = useUser()
   const navigate = useNavigate()
 
@@ -48,6 +57,7 @@ const AuthForm = ({ onLogin }) => {
     setError('')
     setSecurityError('')
     setSuccess('')
+    setCedulaError('') // Resetear el estado
     setFormData({
       username: '',
       password: '',
@@ -74,11 +84,15 @@ const AuthForm = ({ onLogin }) => {
 
     const nameRegex = /^[a-zA-Z]+$/
     const cedulaRegex = /^[0-9]+$/
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,]).{8,20}$/
 
     if (!nameRegex.test(nombre) || nombre.length < 3 || nombre.length > 15) {
       setError('El nombre debe contener entre 3 y 15 caracteres alfabeticos.')
+      setNombreError(' ')
       nombreRef.current.focus()
       return false
+    } else {
+      setNombreError('')
     }
 
     if (
@@ -87,31 +101,49 @@ const AuthForm = ({ onLogin }) => {
       apellido.length > 15
     ) {
       setError('El apellido debe contener entre 5 y 15 caracteres alfabeticos.')
+      setApellidoError(' ')
       apellidoRef.current.focus()
       return false
+    } else {
+      setApellidoError('')
     }
 
     if (!cedulaRegex.test(cedula) || cedula.length < 7 || cedula.length > 15) {
-      setError('La cédula debe contener entre 7 y 15 caracteres.')
+      setError('La cédula debe contener entre 7 y 15 caracteres numéricos.')
       cedulaRef.current.focus()
       return false
     }
 
-    if (username.length < 6 || username.length > 20) {
-      setError('El nombre de usuario debe tener entre 6 y 20 caracteres.')
+    if (username.length < 5 || username.length > 20) {
+      setError(
+        'El nombre de usuario debe tener entre 5 y 20 caracteres alphanuméricos.'
+      )
+      setUsernameError(' ')
       return false
+    } else {
+      setUsernameError('')
     }
 
     if (password.length < 8 || password.length > 20) {
-      setError('La contraseña debe tener entre 8 y 20 caracteres.')
+      setPasswordError('La contraseña debe tener entre 8 y 20 caracteres.')
       passwordRef.current.focus()
       return false
+    } else if (!passwordRegex.test(password)) {
+      setPasswordError(
+        'La contraseña debe tener al menos un número y un carácter especial.'
+      )
+      passwordRef.current.focus()
+      return false
+    } else {
+      setPasswordError('')
     }
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.')
+      setConfirmPasswordError('Las contraseñas no coinciden.')
       confirmPasswordRef.current.focus()
       return false
+    } else {
+      setConfirmPasswordError('')
     }
 
     return true
@@ -150,6 +182,8 @@ const AuthForm = ({ onLogin }) => {
     setError('')
     setSecurityError('')
     setSuccess('')
+    setCedulaError('')
+    setUsernameError('') // Resetear el estado
 
     if (isLogin) {
       try {
@@ -216,9 +250,15 @@ const AuthForm = ({ onLogin }) => {
         onLogin(user)
         navigate('/dashboard')
       } catch (error) {
-        setError(
-          error.response?.data?.message || 'Error al registrar el usuario.'
-        )
+        if (error.response?.data?.code === 'DUPLICATE_CEDULA') {
+          setCedulaError('La cédula ya está registrada')
+        } else if (error.response?.data?.code === 'DUPLICATE_USERNAME') {
+          setUsernameError('El nombre de usuario ya está registrado')
+        } else {
+          setError(
+            error.response?.data?.message || 'Error al registrar el usuario.'
+          )
+        }
         setShowSecurityQuestions(false)
       }
     }
@@ -320,6 +360,12 @@ const AuthForm = ({ onLogin }) => {
                     passwordRef,
                     confirmPasswordRef
                   }}
+                  cedulaError={cedulaError}
+                  usernameError={usernameError}
+                  nombreError={nombreError}
+                  apellidoError={apellidoError}
+                  passwordError={passwordError}
+                  confirmPasswordError={confirmPasswordError}
                 />
               )}
               {!isLogin && showSecurityQuestions && (

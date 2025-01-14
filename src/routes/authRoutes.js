@@ -38,7 +38,10 @@ router.post('/register', async (req, res) => {
       }
 
       if (results.length > 0) {
-        return res.status(400).json({ message: 'La cédula ya está registrada' })
+        return res.status(400).json({
+          message: 'La cédula ya está registrada',
+          code: 'DUPLICATE_CEDULA'
+        })
       }
 
       // Verificar duplicación de nombre de usuario
@@ -54,9 +57,11 @@ router.post('/register', async (req, res) => {
           }
 
           if (results.length > 0) {
-            return res
-              .status(400)
-              .json({ message: 'El nombre de usuario ya está registrado' })
+            return res.status(400).json({
+              message: 'El nombre de usuario ya está registrado',
+              code: 'DUPLICATE_USERNAME',
+              usernameExists: true
+            })
           }
 
           const hashedPassword = await bcrypt.hash(password, 10)
