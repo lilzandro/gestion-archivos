@@ -35,6 +35,9 @@ const AuthForm = ({ onLogin }) => {
   const [apellidoError, setApellidoError] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const [securityAnswer1Error, setSecurityAnswer1Error] = useState('')
+  const [securityAnswer2Error, setSecurityAnswer2Error] = useState('')
+  const [securityAnswer3Error, setSecurityAnswer3Error] = useState('')
 
   const { setUser } = useUser()
   const navigate = useNavigate()
@@ -154,24 +157,30 @@ const AuthForm = ({ onLogin }) => {
     const { securityAnswer1, securityAnswer2, securityAnswer3 } = formData
 
     if (!answerRegex.test(securityAnswer1)) {
-      setSecurityError(
-        'La respuesta 1 debe contener entre 3 y 20 caracteres alfabéticos.'
+      setSecurityAnswer1Error(
+        'La respuesta debe tener entre 3 y 20 caracteres alfabéticos.'
       )
       return false
+    } else {
+      setSecurityAnswer1Error('')
     }
 
     if (!answerRegex.test(securityAnswer2)) {
-      setSecurityError(
-        'La respuesta 2 debe contener entre 3 y 20 caracteres alfabéticos.'
+      setSecurityAnswer2Error(
+        'La respuesta debe tener entre 3 y 20 caracteres alfabéticos.'
       )
       return false
+    } else {
+      setSecurityAnswer2Error('')
     }
 
     if (!answerRegex.test(securityAnswer3)) {
-      setSecurityError(
-        'La respuesta 3 debe contener entre 3 y 20 caracteres alfabéticos.'
+      setSecurityAnswer3Error(
+        'La respuesta debe tener entre 3 y 20 caracteres alfabéticos.'
       )
       return false
+    } else {
+      setSecurityAnswer3Error('')
     }
 
     return true
@@ -374,6 +383,9 @@ const AuthForm = ({ onLogin }) => {
                   handleChange={handleChange}
                   securityError={securityError}
                   setShowSecurityQuestions={setShowSecurityQuestions}
+                  securityAnswer1Error={securityAnswer1Error}
+                  securityAnswer2Error={securityAnswer2Error}
+                  securityAnswer3Error={securityAnswer3Error}
                 />
               )}
               <Button variant='primary' type='submit' className='w-100'>

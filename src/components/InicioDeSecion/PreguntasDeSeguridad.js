@@ -5,7 +5,10 @@ const SecurityQuestions = ({
   formData,
   handleChange,
   securityError,
-  setShowSecurityQuestions
+  setShowSecurityQuestions,
+  securityAnswer1Error,
+  securityAnswer2Error,
+  securityAnswer3Error
 }) => (
   <>
     <Alert variant='info'>
@@ -39,8 +42,12 @@ const SecurityQuestions = ({
             name='securityAnswer1'
             value={formData.securityAnswer1}
             onChange={handleChange}
+            isInvalid={!!securityAnswer1Error}
             required
           />
+          <Form.Control.Feedback type='invalid'>
+            {securityAnswer1Error}
+          </Form.Control.Feedback>
         </Form.Group>
       </Col>
     </Row>
@@ -64,8 +71,12 @@ const SecurityQuestions = ({
             name='securityAnswer2'
             value={formData.securityAnswer2}
             onChange={handleChange}
+            isInvalid={!!securityAnswer2Error}
             required
           />
+          <Form.Control.Feedback type='invalid'>
+            {securityAnswer2Error}
+          </Form.Control.Feedback>
         </Form.Group>
       </Col>
     </Row>
@@ -89,8 +100,12 @@ const SecurityQuestions = ({
             name='securityAnswer3'
             value={formData.securityAnswer3}
             onChange={handleChange}
+            isInvalid={!!securityAnswer3Error}
             required
           />
+          <Form.Control.Feedback type='invalid'>
+            {securityAnswer3Error}
+          </Form.Control.Feedback>
         </Form.Group>
       </Col>
     </Row>
