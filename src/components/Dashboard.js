@@ -1,5 +1,13 @@
 import React, { useState, useEffect, createContext } from 'react'
-import { Container, Row, Col, Button, Image, Modal } from 'react-bootstrap'
+import {
+  Container,
+  Row,
+  Col,
+  Button,
+  Image,
+  Modal,
+  Spinner
+} from 'react-bootstrap'
 import axios from 'axios'
 import { useUser } from './UserContext'
 import { useNavigate } from 'react-router-dom'
@@ -79,7 +87,11 @@ const Dashboard = () => {
   }, [token, userId])
 
   if (loading) {
-    return <div>Cargando...</div> // Puedes mostrar un spinner o mensaje mientras se valida el token
+    return (
+      <div className='d-flex justify-content-center align-items-center vh-100'>
+        <Spinner animation='border' role='status' />
+      </div>
+    )
   }
 
   const handleViewFile = (fileUrl, fileName) => {
