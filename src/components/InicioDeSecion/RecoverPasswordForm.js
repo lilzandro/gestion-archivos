@@ -153,7 +153,6 @@ const RecoverPasswordForm = () => {
         'passwordChangeSuccess',
         'Contraseña cambiada exitosamente'
       )
-
       navigate('/login')
     } catch (err) {
       if (

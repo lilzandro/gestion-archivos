@@ -116,7 +116,7 @@ const BuscarArchivo = ({ handleViewFile }) => {
         <Col>
           <Form.Control
             type='text'
-            placeholder='Buscar por nombre o categoría'
+            placeholder='Buscar por nombre el archivo'
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             onKeyPress={handleKeyPress}

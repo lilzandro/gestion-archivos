@@ -9,9 +9,10 @@ const SecurityQuestions = ({
 }) => (
   <>
     <Alert variant='info'>
-      Las preguntas de seguridad se utilizan para recuperar tu cuenta en caso de
-      que olvides tu contraseña. Por favor, proporciona respuestas que puedas
-      recordar fácilmente.
+      Las preguntas de seguridad son clave para recuperar tu cuenta si olvidas
+      tu contraseña. Por favor, proporciona respuestas que puedas recordar
+      fácilmente y asegúrate de no perderlas, ya que son esenciales para acceder
+      a tu cuenta en caso de emergencia.
     </Alert>
     {securityError && (
       <Alert variant='danger' className='mt-3'>
