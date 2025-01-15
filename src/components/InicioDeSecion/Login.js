@@ -100,10 +100,10 @@ const AuthForm = ({ onLogin }) => {
 
     if (
       !nameRegex.test(apellido) ||
-      apellido.length < 5 ||
+      apellido.length < 3 ||
       apellido.length > 15
     ) {
-      setError('El apellido debe contener entre 5 y 15 caracteres alfabeticos.')
+      setError('El apellido debe contener entre 3 y 15 caracteres alfabeticos.')
       setApellidoError(' ')
       apellidoRef.current.focus()
       return false

@@ -269,7 +269,7 @@ router.post('/user/verify-security-answer', (req, res) => {
     (err, results) => {
       if (err) {
         return res.status(500).json({
-          message: 'Error al verificar la respuesta de seguridad',
+          message: 'Error. Respuesta de seguridad incorrecta',
           error: err
         })
       }

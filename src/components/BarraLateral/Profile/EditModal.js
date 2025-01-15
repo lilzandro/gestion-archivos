@@ -6,7 +6,8 @@ const EditModal = ({
   onHide,
   editedData,
   handleEditChange,
-  handleSaveChanges
+  handleSaveChanges,
+  errors
 }) => {
   return (
     <Modal show={show} onHide={onHide}>
@@ -22,7 +23,11 @@ const EditModal = ({
               name='nombre'
               value={editedData.nombre || ''}
               onChange={handleEditChange}
+              isInvalid={!!errors.nombre}
             />
+            <Form.Control.Feedback type='invalid'>
+              {errors.nombre}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className='mb-3'>
             <Form.Label>Apellido</Form.Label>
@@ -31,7 +36,11 @@ const EditModal = ({
               name='apellido'
               value={editedData.apellido || ''}
               onChange={handleEditChange}
+              isInvalid={!!errors.apellido}
             />
+            <Form.Control.Feedback type='invalid'>
+              {errors.apellido}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className='mb-3'>
             <Form.Label>Cédula</Form.Label>
@@ -40,7 +49,11 @@ const EditModal = ({
               name='cedula'
               value={editedData.cedula || ''}
               onChange={handleEditChange}
+              isInvalid={!!errors.cedula}
             />
+            <Form.Control.Feedback type='invalid'>
+              {errors.cedula}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className='mb-3'>
             <Form.Label>Nombre de Usuario</Form.Label>
@@ -49,7 +62,11 @@ const EditModal = ({
               name='username'
               value={editedData.username || ''}
               onChange={handleEditChange}
+              isInvalid={!!errors.username}
             />
+            <Form.Control.Feedback type='invalid'>
+              {errors.username}
+            </Form.Control.Feedback>
           </Form.Group>
         </Form>
       </Modal.Body>

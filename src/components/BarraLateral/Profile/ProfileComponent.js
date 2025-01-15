@@ -1,10 +1,10 @@
-import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import { Card, Button, Image, Row, Col, Spinner } from 'react-bootstrap'
+import { Card, Button, Image, Row, Col, Spinner, Form } from 'react-bootstrap'
 import { Toaster, toast } from 'react-hot-toast'
 import EditModal from './EditModal'
 import PasswordModal from './PasswordModal'
 import SecurityQuestionModal from './SecurityQuestionModal'
+import axios from 'axios'
 
 const ProfileComponent = ({ userId }) => {
   const [userData, setUserData] = useState(null)
@@ -18,9 +18,9 @@ const ProfileComponent = ({ userId }) => {
   const [securityAnswer, setSecurityAnswer] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  // eslint-disable-next-line no-unused-vars
   const [securityQuestions, setSecurityQuestions] = useState([])
   const [selectedQuestion, setSelectedQuestion] = useState(null)
+  const [errors, setErrors] = useState({})
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,26 +45,37 @@ const ProfileComponent = ({ userId }) => {
   }
 
   const validateData = () => {
-    const { nombre, apellido, cedula } = editedData
+    const { nombre, apellido, cedula, username } = editedData
     const nameRegex = /^[a-zA-Z\s]{1,50}$/
     const cedulaRegex = /^\d{1,10}$/
+    const usernameRegex = /^[a-zA-Z0-9]{5,20}$/
+    const newErrors = {}
 
     if (!nameRegex.test(nombre)) {
-      return 'El nombre debe contener solo letras y tener un máximo de 50 caracteres.'
+      newErrors.nombre =
+        'Error. El nombre debe tener entre 3 y 15 caracteres alfabéticos.'
     }
     if (!nameRegex.test(apellido)) {
-      return 'El apellido debe contener solo letras y tener un máximo de 50 caracteres.'
+      newErrors.apellido =
+        'Error. El apellido debe tener entre 3 y 15 caracteres alfabéticos.'
     }
     if (!cedulaRegex.test(cedula)) {
-      return 'La cédula debe contener solo números y tener un máximo de 10 dígitos.'
+      newErrors.cedula =
+        'Error. La cédula debe contener entre 7 y 15 caracteres numéricos.'
     }
-    return null
+    if (!usernameRegex.test(username)) {
+      newErrors.username =
+        'Error. El nombre de usuario debe tener entre 5 y 20 caracteres alphanuméricos.'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0 ? null : newErrors
   }
 
   const handleSaveChanges = async () => {
     const validationError = validateData()
     if (validationError) {
-      toast.error(validationError)
+      toast.error('Por favor, corrija los errores antes de guardar.')
       return
     }
 
@@ -78,7 +89,7 @@ const ProfileComponent = ({ userId }) => {
       toast.success('Información del usuario actualizada exitosamente')
     } catch (err) {
       console.error('Error al guardar los cambios:', err)
-      toast.error('Error al guardar los cambios')
+      toast.error('Error, el nombre de usuario ya existe')
     }
   }
 
@@ -111,7 +122,7 @@ const ProfileComponent = ({ userId }) => {
       }
     } catch (err) {
       console.error('Error al verificar la respuesta de seguridad:', err)
-      toast.error('Error al verificar la respuesta de seguridad')
+      toast.error('Error. Respuesta de seguridad incorrecta')
     }
   }
 
@@ -252,6 +263,7 @@ const ProfileComponent = ({ userId }) => {
         editedData={editedData}
         handleEditChange={handleEditChange}
         handleSaveChanges={handleSaveChanges}
+        errors={errors}
       />
 
       <SecurityQuestionModal

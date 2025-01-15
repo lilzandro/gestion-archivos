@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Modal, Button, Form, Alert } from 'react-bootstrap'
 
 const PasswordModal = ({
@@ -10,14 +10,35 @@ const PasswordModal = ({
   handleConfirmPasswordChange,
   handleChangePassword
 }) => {
-  const [error, setError] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [confirmPasswordError, setConfirmPasswordError] = useState('')
+  const passwordRef = useRef(null)
+  const confirmPasswordRef = useRef(null)
+  const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,]).{8,20}$/
 
   const handlePasswordChange = () => {
     if (newPassword.length < 8 || newPassword.length > 20) {
-      setError('La contraseña debe tener entre 8 y 20 caracteres.')
-      return
+      setPasswordError('La contraseña debe tener entre 8 y 20 caracteres.')
+      passwordRef.current.focus()
+      return false
+    } else if (!passwordRegex.test(newPassword)) {
+      setPasswordError(
+        'La contraseña debe tener al menos un número y un carácter especial.'
+      )
+      passwordRef.current.focus()
+      return false
+    } else {
+      setPasswordError('')
     }
-    setError('')
+
+    if (newPassword !== confirmPassword) {
+      setConfirmPasswordError('Las contraseñas no coinciden.')
+      confirmPasswordRef.current.focus()
+      return false
+    } else {
+      setConfirmPasswordError('')
+    }
+
     handleChangePassword()
   }
 
@@ -27,7 +48,6 @@ const PasswordModal = ({
         <Modal.Title>Cambiar Contraseña</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {error && <Alert variant='danger'>{error}</Alert>}
         <Form>
           <Form.Group className='mb-3'>
             <Form.Label>Nueva Contraseña</Form.Label>
@@ -35,7 +55,12 @@ const PasswordModal = ({
               type='password'
               value={newPassword}
               onChange={handleNewPasswordChange}
+              ref={passwordRef}
+              isInvalid={!!passwordError}
             />
+            <Form.Control.Feedback type='invalid'>
+              {passwordError}
+            </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className='mb-3'>
             <Form.Label>Confirmar Nueva Contraseña</Form.Label>
@@ -43,7 +68,12 @@ const PasswordModal = ({
               type='password'
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
+              ref={confirmPasswordRef}
+              isInvalid={!!confirmPasswordError}
             />
+            <Form.Control.Feedback type='invalid'>
+              {confirmPasswordError}
+            </Form.Control.Feedback>
           </Form.Group>
         </Form>
       </Modal.Body>
