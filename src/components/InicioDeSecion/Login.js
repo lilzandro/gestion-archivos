@@ -133,7 +133,7 @@ const AuthForm = ({ onLogin }) => {
       return false
     } else if (!passwordRegex.test(password)) {
       setPasswordError(
-        'La contraseña debe tener al menos un número y un carácter especial.'
+        'La contraseña debe tener al menos un número y un carácter especial (signos de puntuacion y  numeros).'
       )
       passwordRef.current.focus()
       return false

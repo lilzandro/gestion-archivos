@@ -1,8 +1,17 @@
-import React, { useState } from 'react'
-import { Form, Button, Container, Card, Alert } from 'react-bootstrap'
+import React, { useState, useRef } from 'react'
+import {
+  Form,
+  Button,
+  Container,
+  Card,
+  Alert,
+  InputGroup
+} from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { Toaster, toast } from 'react-hot-toast'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons'
 
 const RecoverPasswordForm = () => {
   const [cedula, setCedula] = useState('')
@@ -16,7 +25,12 @@ const RecoverPasswordForm = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isSecurityVerified, setIsSecurityVerified] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
+  const passwordRef = useRef(null)
+  const confirmPasswordRef = useRef(null)
+  const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*.,]).{8,20}$/
 
   const handleChange = e => {
     setCedula(e.target.value)
@@ -32,6 +46,14 @@ const RecoverPasswordForm = () => {
 
   const handleConfirmPasswordChange = e => {
     setConfirmPassword(e.target.value)
+  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword)
   }
 
   const handleSubmit = async e => {
@@ -115,8 +137,8 @@ const RecoverPasswordForm = () => {
       }
     } catch (err) {
       console.error('Error al verificar la respuesta de seguridad:', err)
-      setError('Error al verificar la respuesta de seguridad')
-      toast.error('Error al verificar la respuesta de seguridad', {
+      setError('Error. La respuesta de seguridad es incorrecta')
+      toast.error('Error. La respuesta de seguridad es incorrecta', {
         duration: 4000
       })
     }
@@ -128,16 +150,34 @@ const RecoverPasswordForm = () => {
 
     if (newPassword.length < 8 || newPassword.length > 20) {
       setError('La contraseña debe tener entre 8 y 20 caracteres.')
+      passwordRef.current.focus()
       toast.error('La contraseña debe tener entre 8 y 20 caracteres.', {
         duration: 4000
       })
       return
+    } else if (!passwordRegex.test(newPassword)) {
+      setError(
+        'La contraseña debe tener al menos un número y un carácter especial.'
+      )
+      passwordRef.current.focus()
+      toast.error(
+        'La contraseña debe tener al menos un número y un carácter especial.',
+        {
+          duration: 4000
+        }
+      )
+      return
+    } else {
+      setError('')
     }
 
     if (newPassword !== confirmPassword) {
       setError('Las contraseñas no coinciden.')
+      confirmPasswordRef.current.focus()
       toast.error('Las contraseñas no coinciden.', { duration: 4000 })
       return
+    } else {
+      setError('')
     }
 
     try {
@@ -254,23 +294,43 @@ const RecoverPasswordForm = () => {
           <Form onSubmit={handleChangePassword} className='mt-4'>
             <Form.Group controlId='newPassword'>
               <Form.Label>Nueva Contraseña</Form.Label>
-              <Form.Control
-                type='password'
-                name='newPassword'
-                value={newPassword}
-                onChange={handlePasswordChange}
-                required
-              />
+              <InputGroup>
+                <Form.Control
+                  type={showPassword ? 'text' : 'password'}
+                  name='newPassword'
+                  value={newPassword}
+                  onChange={handlePasswordChange}
+                  ref={passwordRef}
+                  required
+                />
+                <Button
+                  variant='outline-secondary'
+                  onClick={togglePasswordVisibility}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </Button>
+              </InputGroup>
             </Form.Group>
             <Form.Group controlId='confirmPassword' className='mt-3'>
               <Form.Label>Confirmar Nueva Contraseña</Form.Label>
-              <Form.Control
-                type='password'
-                name='confirmPassword'
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                required
-              />
+              <InputGroup>
+                <Form.Control
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name='confirmPassword'
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  ref={confirmPasswordRef}
+                  required
+                />
+                <Button
+                  variant='outline-secondary'
+                  onClick={toggleConfirmPasswordVisibility}
+                >
+                  <FontAwesomeIcon
+                    icon={showConfirmPassword ? faEyeSlash : faEye}
+                  />
+                </Button>
+              </InputGroup>
             </Form.Group>
             <Button variant='primary' type='submit' className='w-100 mt-3'>
               Cambiar Contraseña
