@@ -1,1 +1,0 @@
-start "" /B cmd /c "cd /d C:\Users\lisan\Desktop\Workspaces\Nueva carpeta\gestion-archivos && npm start"
