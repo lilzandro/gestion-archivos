@@ -54,7 +54,6 @@ const AppContent = () => {
           element={user ? <Dashboard /> : <Navigate to='/login' />}
         />
         <Route path='/recover-password' element={<RecoverPasswordForm />} />{' '}
-        {/* Nueva ruta para recuperación de contraseña */}
         <Route path='/' element={<Navigate to='/login' />} />
       </Routes>
     </Router>

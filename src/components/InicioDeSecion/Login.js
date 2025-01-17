@@ -317,6 +317,12 @@ const AuthForm = ({ onLogin }) => {
           padding: '20px'
         }}
       >
+        <img
+          src='Logo-unellez.png'
+          alt='Logo'
+          className='mb-4 mx-auto d-block'
+          style={{ width: '100px', height: '100px', objectFit: 'contain' }}
+        />
         <AnimatePresence mode='wait'>
           <motion.div
             key={

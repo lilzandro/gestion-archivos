@@ -143,6 +143,7 @@ const Dashboard = () => {
       <NavbarComponent
         toggleSidebar={toggleSidebar}
         userProfile={userProfile}
+        setActiveSection={setActiveSection}
       />
       <BarraLateral
         showSidebar={showSidebar}
